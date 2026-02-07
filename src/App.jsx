@@ -3,49 +3,50 @@ import {
   Trophy, ShieldAlert, Zap, Compass, AlertTriangle, 
   ChevronRight, RefreshCw, Printer, Target, Save, 
   CheckCircle2, BarChart3, Lock, ArrowLeft, BookOpen, 
-  PlayCircle, GraduationCap
+  PlayCircle, GraduationCap, ChevronDown, User, Calendar
 } from 'lucide-react';
 import { initializeApp, getApps } from 'firebase/app';
 import { getAuth, signInAnonymously, onAuthStateChanged } from 'firebase/auth';
-import { getFirestore, collection, addDoc, onSnapshot, serverTimestamp } from 'firebase/firestore';
+import { getFirestore, collection, addDoc, onSnapshot, serverTimestamp, query } from 'firebase/firestore';
 
-// --- FIREBASE INITIALIZATION ---
+// --- ROBUST FIREBASE INITIALIZATION ---
 let db = null;
 let auth = null;
 const appId = typeof __app_id !== 'undefined' ? __app_id : 'worthy-retail-xray';
-let connectionStatus = "Connecting...";
 
 const initFirebase = () => {
   try {
     const rawConfig = import.meta.env.VITE_FIREBASE_CONFIG || (typeof __firebase_config !== 'undefined' ? __firebase_config : null);
     if (rawConfig) {
-      const config = typeof rawConfig === 'string' ? JSON.parse(rawConfig.trim()) : rawConfig;
+      let config = rawConfig;
+      if (typeof rawConfig === 'string') {
+        // Self-healing: removes trailing semicolons or JS variable assignments
+        const cleaned = rawConfig.trim()
+          .replace(/;$/, '')
+          .replace(/^[^{]*/, '')
+          .replace(/[^}]*$/, '');
+        config = JSON.parse(cleaned);
+      }
       const app = getApps().length === 0 ? initializeApp(config) : getApps()[0];
       auth = getAuth(app);
       db = getFirestore(app);
-      connectionStatus = "Live";
-    } else {
-      connectionStatus = "Offline: No Config Found";
     }
-  } catch (e) {
-    connectionStatus = "Offline: Configuration Error";
-    console.error(e);
-  }
+  } catch (e) { console.error("Firebase Connection Error:", e.message); }
 };
 
 initFirebase();
 
 const ARCHETYPES = {
-  SOLID: { id: 'SOLID', name: 'Solid Foundation', color: '#059669', icon: <Trophy className="w-8 h-8 md:w-12 md:h-12" />, status: "Legacy Ready", description: "Equilibrium across all three pillars. You drive exceptional results while maintaining deep trust.", prescription: "Ready for multi-unit leadership. Focus on scaling the BFP framework through mentorship.", striveFor: "Legacy Scaling" },
-  BUREAUCRAT: { id: 'BUREAUCRAT', name: 'The Bureaucrat', color: '#2563eb', icon: <ShieldAlert className="w-8 h-8 md:w-12 md:h-12" />, status: "Stagnant", description: "Trust is present, but velocity is low. Processes are prioritized over results.", prescription: "Inject Fuel immediately. Implement aggressive KPI targets and agile feedback loops.", striveFor: "Fuel Injection" },
-  BURNOUT: { id: 'BURNOUT', name: 'Burnout Driver', color: '#f97316', icon: <Zap className="w-8 h-8 md:w-12 md:h-12" />, status: "Human Debt High", description: "KPIs met through brute force. High velocity but dangerously low Bedrock.", prescription: "Recover Purpose. Shift from 'Command & Control' to 'Clarity & Care' immediately.", striveFor: "Purpose Recovery" },
-  VISIONARY: { id: 'VISIONARY', name: 'Performative Visionary', color: '#9333ea', icon: <Compass className="w-8 h-8 md:w-12 md:h-12" />, status: "Hollow Foundation", description: "Charismatic but fails in execution. The team loves the dream but is exhausted by reality.", prescription: "Stabilize Bedrock. Stop selling the future and start fixing the present systems.", striveFor: "Structural Integrity" },
-  ACCIDENTAL: { id: 'ACCIDENTAL', name: 'The Accidental Leader', color: '#dc2626', icon: <AlertTriangle className="w-8 h-8 md:w-12 md:h-12" />, status: "Critical Risk", description: "Technical expert leading on instinct. Survival mode across all pillars.", prescription: "BFP Foundations. Enrollment in radical ownership and leadership basics is mandatory.", striveFor: "Core BFP Foundations" }
+  SOLID: { id: 'SOLID', name: 'Solid Foundation', color: '#059669', icon: <Trophy className="w-8 h-8 md:w-12 md:h-12" />, description: "Equilibrium across all three pillars. You drive exceptional results while maintaining deep trust.", prescription: "Ready for multi-unit leadership. Focus on scaling the BFP framework through mentorship.", striveFor: "Legacy Scaling" },
+  BUREAUCRAT: { id: 'BUREAUCRAT', name: 'The Bureaucrat', color: '#2563eb', icon: <ShieldAlert className="w-8 h-8 md:w-12 md:h-12" />, description: "Trust is present, but velocity is low. Processes are prioritized over results.", prescription: "Inject Fuel immediately. Implement aggressive KPI targets and agile feedback loops.", striveFor: "Fuel Injection" },
+  BURNOUT: { id: 'BURNOUT', name: 'Burnout Driver', color: '#f97316', icon: <Zap className="w-8 h-8 md:w-12 md:h-12" />, description: "KPIs met through brute force. High velocity but dangerously low Bedrock.", prescription: "Recover Purpose. Shift from 'Command & Control' to 'Clarity & Care' immediately.", striveFor: "Purpose Recovery" },
+  VISIONARY: { id: 'VISIONARY', name: 'Performative Visionary', color: '#9333ea', icon: <Compass className="w-8 h-8 md:w-12 md:h-12" />, description: "Charismatic but fails in execution. The team loves the dream but is exhausted by reality.", prescription: "Stabilize Bedrock. Stop selling the future and start fixing the present systems.", striveFor: "Structural Integrity" },
+  ACCIDENTAL: { id: 'ACCIDENTAL', name: 'The Accidental Leader', color: '#dc2626', icon: <AlertTriangle className="w-8 h-8 md:w-12 md:h-12" />, description: "Technical expert leading on instinct. Survival mode across all pillars.", prescription: "BFP Foundations. Enrollment in radical ownership and leadership basics is mandatory.", striveFor: "Core BFP Foundations" }
 };
 
 const CURRICULUM = {
-  B: { title: "Bedrock: The Foundation", color: "#002147", modules: [{ name: "Module 1: The Safety Gap", desc: "Auditing psychological safety and core trust within your team." }, { name: "Module 2: Truth-Default Culture", desc: "Implementing transparency and high-integrity communication." }] },
-  F: { title: "Fuel: The Velocity", color: "#C5A059", modules: [{ name: "Module 3: Lean Retail Execution", desc: "Removing operational 'red tape' that kills store speed." }, { name: "Module 4: Agile Decision Loops", desc: "Training staff to solve problems in 60 seconds without you." }] },
+  B: { title: "Bedrock: The Foundation", color: "#002147", modules: [{ name: "Module 1: The Safety Gap", desc: "Auditing psychological safety and trust within your floor teams." }, { name: "Module 2: Truth-Default Culture", desc: "Implementing transparency and high-integrity communication systems." }] },
+  F: { title: "Fuel: The Velocity", color: "#C5A059", modules: [{ name: "Module 3: Lean Retail Execution", desc: "Removing operational 'red tape' that kills your team's speed." }, { name: "Module 4: Agile Decision Loops", desc: "Training staff to solve problems in 60 seconds without you." }] },
   P: { title: "Purpose: The Legacy", color: "#64748b", modules: [{ name: "Module 5: The 'Why' Hierarchy", desc: "Connecting floor tasks to deep personal and community purpose." }, { name: "Module 6: Ownership Mindset", desc: "Building owner-operators who care about your store's success." }] }
 };
 
@@ -84,8 +85,7 @@ export default function App() {
   useEffect(() => {
     if (auth) {
       signInAnonymously(auth).then(setUser).catch(console.error);
-      const unsubscribe = onAuthStateChanged(auth, setUser);
-      return () => unsubscribe();
+      return onAuthStateChanged(auth, setUser);
     }
   }, []);
 
@@ -113,13 +113,13 @@ export default function App() {
   }, [answers]);
 
   const saveResults = async () => {
-    if (!db || !user || !results) return alert("System Offline: Ensure Firebase configuration is valid in Vercel.");
+    if (!db || !user) return alert("System Offline: Ensure Firebase configuration is valid in Vercel settings.");
     setIsSaving(true);
     try {
       await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'assessments'), {
         userName, archetype: results.id, scores: results.scores, timestamp: new Date().toISOString(), createdAt: serverTimestamp()
       });
-      alert("Success: Results synced to The Campus Dashboard.");
+      alert("Success: Data synced to The Campus.");
     } catch (e) { alert("Sync Failed: " + e.message); }
     setIsSaving(false);
   };
@@ -154,7 +154,7 @@ export default function App() {
         <Lock className="mx-auto mb-4 text-[#C5A059]" />
         <h2 className="text-2xl font-serif font-bold mb-6">Admin Access</h2>
         <input type="password" value={adminPassword} onChange={(e)=>setAdminPassword(e.target.value)} placeholder="Password..." className="w-full p-4 border rounded-xl mb-6 text-center" />
-        <button onClick={()=>{if(adminPassword==='worthy2024'){setIsAdminAuthenticated(true); setView('admin');}else alert('Invalid Password');}} className="bg-[#002147] text-white p-4 rounded-full w-full font-bold active:scale-95">Enter Dashboard</button>
+        <button onClick={()=>{if(adminPassword==='worthy2024'){setIsAdminAuthenticated(true); setView('admin');}else alert('Invalid Password');}} className="bg-[#002147] text-white p-4 rounded-full w-full font-bold active:scale-95 transition-transform">Enter Dashboard</button>
         <button onClick={()=>setView('welcome')} className="mt-4 text-slate-400 font-bold text-sm">Cancel</button>
       </div>
     </div>
@@ -164,14 +164,13 @@ export default function App() {
     <div className="min-h-screen bg-[#FAF9F6] flex flex-col items-center justify-center p-4">
       <div className="max-w-2xl w-full bg-white p-6 md:p-14 rounded-[32px] md:rounded-[40px] shadow-2xl border relative overflow-hidden">
         <div className="absolute top-0 left-0 h-1.5 bg-[#002147] transition-all duration-300" style={{width:`${((currentStep+1)/QUESTIONS.length)*100}%`}} />
-        <p className="text-[#C5A059] font-black uppercase text-[10px] tracking-widest mb-4">Diagnostic Step {currentStep+1} / {QUESTIONS.length}</p>
         <h3 className="text-xl md:text-3xl font-medium mb-8 md:mb-12 leading-tight text-slate-800">"{QUESTIONS[currentStep].text}"</h3>
         <div className="space-y-2 md:space-y-3">
           {[5,4,3,2,1].map(v => (
             <button key={v} onClick={()=>{
               setAnswers({...answers, [QUESTIONS[currentStep].id]:v});
               if(currentStep < QUESTIONS.length-1) { setCurrentStep(currentStep+1); window.scrollTo(0,0); } else setView('results');
-            }} className="w-full text-left p-4 md:p-5 rounded-2xl border-2 border-slate-50 hover:border-[#C5A059] font-bold text-slate-600 active:bg-slate-50 transition-all text-sm md:text-base">
+            }} className="w-full text-left p-4 md:p-5 rounded-2xl border-2 border-slate-50 hover:border-[#C5A059] font-bold text-slate-600 transition-all text-sm md:text-base">
               {v===5?'Strongly Agree':v===1?'Strongly Disagree':v===4?'Agree':v===2?'Disagree':'Neutral'}
             </button>
           ))}
@@ -184,23 +183,25 @@ export default function App() {
     <div className="min-h-screen bg-[#cbd5e1] p-4 md:py-12 md:px-6 overflow-x-hidden">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center mb-6 md:mb-10 gap-3 print:hidden">
             <div className="flex gap-2 w-full md:w-auto">
-                <button onClick={()=>window.print()} className="flex-1 md:flex-none bg-[#002147] text-white px-6 py-4 rounded-full font-bold flex items-center justify-center gap-2 shadow-lg active:scale-95 transition-all"><Printer size={18}/> PDF Report</button>
+                <button onClick={()=>window.print()} className="flex-1 md:flex-none bg-[#002147] text-white px-6 py-4 rounded-full font-bold flex items-center justify-center gap-2 shadow-lg active:scale-95 transition-all"><Printer size={18}/> PDF report</button>
                 <button onClick={saveResults} className="flex-1 md:flex-none bg-[#C5A059] text-white px-6 py-4 rounded-full font-bold flex items-center justify-center gap-2 shadow-lg active:scale-95 transition-all">{isSaving?'Syncing...':'Sync Data'}</button>
             </div>
             <button onClick={()=>{setAnswers({}); setCurrentStep(0); setView('welcome');}} className="w-full md:w-auto font-bold text-[#002147] bg-white/50 px-6 py-3 rounded-full hover:bg-white transition-all"><RefreshCw size={16} className="inline mr-2"/> Restart</button>
         </div>
 
         <div className="max-w-[1280px] mx-auto space-y-6 md:space-y-12">
+            {/* PAGE 1: COVER */}
             <div className="report-slide bg-[#FAF9F6] p-8 md:p-24 border-t-[10px] md:border-t-[14px] border-[#002147] shadow-2xl flex flex-col justify-center min-h-[400px] md:min-h-[720px] rounded-[24px] md:rounded-none">
                 <p className="uppercase tracking-[0.3em] text-[#C5A059] font-black text-[10px] md:text-sm mb-4">Confidential Diagnostic</p>
                 <h1 className="text-4xl md:text-8xl font-serif font-black text-[#002147] mb-6 md:mb-10 leading-[1.1]">Worthy Retail<br/>X-Ray Profile</h1>
                 <p className="text-lg md:text-3xl italic text-slate-500">Prepared for: <span className="font-bold text-[#002147]">{userName}</span></p>
             </div>
 
+            {/* PAGE 2: ANALYSIS */}
             <div className="report-slide bg-[#FAF9F6] p-8 md:p-24 border-t-[10px] md:border-t-[14px] border-[#002147] shadow-2xl min-h-auto md:min-h-[720px] rounded-[24px] md:rounded-none">
                 <h2 className="text-2xl md:text-4xl font-serif font-bold text-[#002147] mb-6 md:mb-12 border-b pb-4 md:pb-8 flex justify-between items-center">Analysis <span className="text-[10px] font-black uppercase text-slate-300">BFP Framework</span></h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-20 items-start">
-                    <div>
+                    <div className="flex flex-col">
                         <div className="flex items-center gap-4 mb-6 md:mb-10">
                             <div className="p-3 bg-white shadow-md rounded-xl text-[#002147] border">{results.icon}</div>
                             <div>
@@ -222,6 +223,7 @@ export default function App() {
                 </div>
             </div>
 
+            {/* PAGE 3: ROADMAP */}
             <div className="report-slide bg-[#FAF9F6] p-8 md:p-24 border-t-[10px] md:border-t-[14px] border-[#C5A059] shadow-2xl min-h-auto md:min-h-[720px] rounded-[24px] md:rounded-none">
                 <div className="flex items-center gap-4 mb-10 border-b pb-8">
                   <div className="bg-[#002147] text-[#C5A059] p-4 rounded-full shadow-lg"><BookOpen size={32} /></div>
@@ -230,9 +232,8 @@ export default function App() {
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
                   <div className="lg:col-span-5 bg-white p-8 md:p-12 rounded-[32px] md:rounded-[48px] border shadow-xl text-center flex flex-col items-center justify-center">
                     <GraduationCap size={64} className="text-[#002147] mb-6" />
-                    <p className="text-xs font-black uppercase text-slate-400 mb-2">Priority Focus</p>
-                    <h3 className="text-2xl md:text-3xl font-serif font-bold text-[#002147] mb-4">{CURRICULUM[results.lowestPillar].title}</h3>
-                    <p className="text-slate-500 text-sm md:text-base">We suggest prioritizing these modules to stabilize your foundational performance.</p>
+                    <h3 className="text-2xl font-serif font-bold text-[#002147] mb-4">{CURRICULUM[results.lowestPillar].title}</h3>
+                    <p className="text-slate-500 text-sm md:text-base">Targeted modules to stabilize your foundation.</p>
                   </div>
                   <div className="lg:col-span-7 flex flex-col gap-4">
                     {CURRICULUM[results.lowestPillar].modules.map((mod, idx) => (
@@ -240,7 +241,7 @@ export default function App() {
                         <div className="bg-slate-50 text-slate-300 group-hover:bg-[#C5A059] group-hover:text-white p-4 rounded-2xl"><PlayCircle size={24} /></div>
                         <div>
                           <h4 className="font-bold text-[#002147] text-lg md:text-xl">{mod.name}</h4>
-                          <p className="text-sm md:text-base text-slate-500 mt-2">{mod.desc}</p>
+                          <p className="text-sm md:text-base text-slate-500 mt-2 leading-relaxed">{mod.desc}</p>
                         </div>
                       </div>
                     ))}
@@ -258,22 +259,22 @@ export default function App() {
     <div className="min-h-screen bg-slate-50 p-4 md:p-10 text-[#002147]">
         <div className="max-w-7xl mx-auto">
             <div className="flex justify-between items-center mb-10">
-                <div className="flex items-center gap-4"><BarChart3 className="text-[#C5A059]" size={24} /><h1 className="text-2xl font-serif font-bold">Campus Admin</h1></div>
-                <button onClick={()=>setView('welcome')} className="font-bold text-[#C5A059] flex items-center gap-2 bg-white px-4 py-2 rounded-lg border shadow-sm"><ArrowLeft size={16}/> Exit</button>
+                <div className="flex items-center gap-4"><BarChart3 className="text-[#C5A059]" size={24} /><h1 className="text-2xl font-serif font-bold tracking-tight">Campus Admin</h1></div>
+                <button onClick={()=>setView('welcome')} className="font-bold text-[#C5A059] flex items-center gap-2 bg-white px-4 py-2 rounded-lg border shadow-sm"><ArrowLeft size={16}/> Back</button>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
               <div className="bg-white p-8 rounded-3xl shadow-sm border"><p className="text-[10px] font-black uppercase text-slate-400 mb-2">Total Diagnostics</p><p className="text-4xl font-serif font-black">{assessments.length}</p></div>
-              <div className="bg-white p-8 rounded-3xl shadow-sm border text-emerald-600 font-bold flex items-center gap-2">{db ? <CheckCircle2 size={24}/> : <RefreshCw className="animate-spin"/>} {db ? "Database Connected" : "Connecting..."}</div>
+              <div className="bg-white p-8 rounded-3xl shadow-sm border flex items-center gap-3 font-bold text-emerald-600">{db ? <CheckCircle2 size={24}/> : <RefreshCw className="animate-spin" size={24}/>} {db ? "Database Connected" : "Connecting..."}</div>
             </div>
-            <div className="bg-white rounded-[32px] shadow-sm border overflow-hidden overflow-x-auto">
-                <table className="w-full text-left"><thead className="bg-slate-50 border-b"><tr><th className="p-6 text-[10px] font-black uppercase tracking-widest text-slate-400">Leader</th><th className="p-6 text-[10px] font-black uppercase tracking-widest text-slate-400">Archetype</th><th className="p-6 text-[10px] font-black uppercase tracking-widest text-slate-400">Scores</th><th className="p-6 text-[10px] font-black uppercase tracking-widest text-slate-400">Date</th></tr></thead>
+            <div className="bg-white rounded-[24px] md:rounded-[40px] shadow-sm border overflow-hidden overflow-x-auto">
+                <table className="w-full text-left"><thead className="bg-slate-50 border-b"><tr><th className="p-4 md:p-8 uppercase text-[10px] font-black text-slate-400">Leader</th><th className="p-4 md:p-8 uppercase text-[10px] font-black text-slate-400">Archetype</th><th className="p-4 md:p-8 uppercase text-[10px] font-black text-slate-400">Scores</th><th className="p-8 hidden md:table-cell uppercase text-[10px] font-black text-slate-400">Date</th></tr></thead>
                 <tbody className="divide-y divide-slate-50">
-                    {assessments.length === 0 ? <tr><td colSpan="4" className="p-20 text-center text-slate-400 italic font-serif">Waiting for cloud data...</td></tr> : assessments.map(e => (
+                    {assessments.map(e => (
                         <tr key={e.id} className="hover:bg-slate-50/50">
-                            <td className="p-6 font-bold">{e.userName}</td>
-                            <td className="p-6"><span className="px-2 py-1 rounded text-[10px] font-black uppercase border" style={{color: ARCHETYPES[e.archetype]?.color, borderColor: ARCHETYPES[e.archetype]?.color}}>{e.archetype}</span></td>
-                            <td className="p-6 font-mono text-xs">{e.scores?.b}% / {e.scores?.f}% / {e.scores?.p}%</td>
-                            <td className="p-6 text-slate-400 text-sm font-medium">{e.timestamp ? new Date(e.timestamp).toLocaleDateString() : 'N/A'}</td>
+                            <td className="p-4 md:p-8 font-bold">{e.userName}</td>
+                            <td className="p-4 md:p-8"><span className="px-2 py-1 rounded text-[10px] font-black uppercase border" style={{color: ARCHETYPES[e.archetype]?.color, borderColor: ARCHETYPES[e.archetype]?.color}}>{e.archetype}</span></td>
+                            <td className="p-4 md:p-8 font-mono text-xs">{e.scores?.b}% / {e.scores?.f}% / {e.scores?.p}%</td>
+                            <td className="p-8 hidden md:table-cell text-slate-300 text-sm">{e.timestamp ? new Date(e.timestamp).toLocaleDateString() : 'N/A'}</td>
                         </tr>
                     ))}
                 </tbody></table>
