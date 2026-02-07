@@ -42,7 +42,7 @@ const ARCHETYPES = {
   },
   BUREAUCRAT: { 
     id: 'BUREAUCRAT', 
-    name: 'The Bureaucrat', 
+    name: 'Bureaucrat', 
     color: '#2563eb', 
     icon: <ShieldAlert className="w-10 h-10 md:w-12 md:h-12" />, 
     status: "Stagnant", 
@@ -75,7 +75,7 @@ const ARCHETYPES = {
   },
   ACCIDENTAL: { 
     id: 'ACCIDENTAL', 
-    name: 'The Accidental Leader', 
+    name: 'Accidental Leader', 
     color: '#dc2626', 
     icon: <AlertTriangle className="w-10 h-10 md:w-12 md:h-12" />, 
     status: "Critical Risk", 
@@ -90,7 +90,7 @@ const CURRICULUM = {
   B: { 
     title: "Bedrock: The Foundation", 
     modules: [
-      { name: "Module 1: The Safety Gap", desc: "Auditing psychological safety and building core trust required for floor teams." },
+      { name: "Module 1: The Safety Gap", desc: "Auditing psychological safety and building the core trust required for floor teams." },
       { name: "Module 5: Strategic Storytelling", desc: "Connecting day-to-day execution to a compelling 'why' that inspires discretionary effort." },
       { name: "Module 7: Trust Under Pressure", desc: "Maintaining integrity and safety when speed and performance demands intensify." }
     ] 
@@ -203,8 +203,8 @@ export default function App() {
   };
 
   const PillarBar = ({ label, value, color }) => (
-    <div className="w-full mb-6">
-      <div className="flex justify-between text-[10px] font-black uppercase mb-1.5 text-slate-400 tracking-[0.1em]">
+    <div className="flex-1">
+      <div className="flex justify-between text-[9px] font-black uppercase mb-1.5 text-slate-400 tracking-wider">
         <span>{label}</span><span>{value}%</span>
       </div>
       <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
@@ -214,7 +214,7 @@ export default function App() {
   );
 
   const Footer = ({ page }) => (
-    <div className="mt-auto pt-6 flex justify-between items-center border-t border-slate-100 text-[#cbd5e1] font-black text-[9px] uppercase tracking-[0.3em] opacity-80">
+    <div className="mt-auto pt-6 flex justify-between items-center border-t border-slate-100 text-[#cbd5e1] font-black text-[9px] uppercase tracking-[0.3em] opacity-70">
       <span>Worthy Retail X-Ray | Confidential</span>
       <span>Page {page} of 5</span>
     </div>
@@ -233,17 +233,17 @@ export default function App() {
             </div>
             <div>
                 <div className="flex justify-between mb-1 ml-4 mr-4">
-                   <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Team Code</p>
+                   <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Team/Store Code</p>
                    <button onClick={()=>setTeamCode("GENERAL")} className="text-[10px] font-black uppercase text-[#C5A059] tracking-widest hover:underline">Skip Code</button>
                 </div>
-                <input type="text" value={teamCode} onChange={(e)=>setTeamCode(e.target.value)} placeholder="Store Code (Optional)" className="w-full p-4 border-2 rounded-2xl font-bold outline-none focus:border-[#C5A059] uppercase" />
+                <input type="text" value={teamCode} onChange={(e)=>setTeamCode(e.target.value)} placeholder="Optional (e.g. STORE101)" className="w-full p-4 border-2 rounded-2xl font-bold outline-none focus:border-[#C5A059] uppercase" />
             </div>
         </div>
 
         <button disabled={!userName} onClick={()=>setView('quiz')} className="w-full bg-[#002147] text-white py-4 md:py-5 rounded-full font-bold text-lg md:text-xl hover:bg-[#C5A059] transition-all active:scale-95 shadow-xl">Start Analysis</button>
         <p className="mt-4 text-[10px] text-slate-400 font-bold uppercase tracking-widest">Structural auditing for high-performance retail</p>
       </div>
-      <button onClick={()=>setView('login')} className="mt-8 md:mt-12 text-slate-300 text-[10px] font-black uppercase tracking-widest flex items-center gap-2 hover:text-[#C5A059] transition-colors"><Lock size={12}/> Admin Portal</button>
+      <button onClick={()=>setView('login')} className="mt-8 md:mt-12 text-slate-300 text-[10px] font-black uppercase tracking-widest flex items-center gap-2 hover:text-[#C5A059] transition-colors"><Users size={12}/> Team Dashboard</button>
     </div>
   );
 
@@ -251,7 +251,7 @@ export default function App() {
     <div className="min-h-screen bg-[#FAF9F6] flex items-center justify-center p-6 text-[#002147]">
       <div className="bg-white p-10 rounded-[32px] shadow-xl text-center max-w-sm w-full border">
         <Lock className="mx-auto mb-4 text-[#C5A059]" />
-        <h2 className="text-2xl font-serif font-bold mb-6">Manager Access</h2>
+        <h2 className="text-2xl font-serif font-bold mb-6 text-center">Manager Access</h2>
         <input type="password" value={adminPassword} onChange={(e)=>setAdminPassword(e.target.value)} placeholder="Academy Password..." className="w-full p-4 border rounded-xl mb-6 text-center" />
         <button onClick={()=>{if(adminPassword==='worthy2024'){setIsAdminAuthenticated(true); setView('admin');}else alert('Invalid Password');}} className="bg-[#002147] text-white p-4 rounded-full w-full font-bold active:scale-95 transition-transform">Enter Dashboard</button>
         <button onClick={()=>setView('welcome')} className="mt-4 text-slate-400 font-bold text-sm">Cancel</button>
@@ -303,23 +303,25 @@ export default function App() {
             {/* PAGE 2: ANALYSIS */}
             <div className="report-slide bg-[#FAF9F6] p-8 md:p-24 border-t-[10px] md:border-t-[14px] border-[#002147] shadow-2xl min-h-auto md:min-h-[720px] rounded-[24px] md:rounded-none flex flex-col">
                 <h2 className="text-[10px] font-black uppercase text-slate-300 tracking-[0.3em] mb-4">BFP Framework Analysis</h2>
-                <h3 className="text-2xl md:text-5xl font-serif font-black text-[#002147] mb-8">Leadership Archetype: {results.name}</h3>
+                <h3 className="text-2xl md:text-5xl font-serif font-black text-[#002147] mb-10">Leadership Archetype: {results.name}</h3>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-20 items-start flex-1">
                     <div className="flex flex-col">
-                        <div className="flex items-center gap-6 mb-10">
+                        <div className="flex items-center gap-6 mb-12">
                             <div className="p-3 bg-white shadow-md rounded-xl text-[#002147] border">{results.icon}</div>
                             <p className="text-base md:text-2xl text-slate-600 italic leading-relaxed">"{results.description}"</p>
                         </div>
                         
-                        <div className="bg-slate-50 p-8 rounded-3xl mb-10 border border-slate-100">
+                        <div className="bg-slate-50 p-8 rounded-3xl mb-12 border border-slate-100">
                           <p className="text-[10px] font-black uppercase text-[#C5A059] mb-4 tracking-widest">What This Means For You</p>
                           <p className="text-slate-600 leading-relaxed font-medium text-sm md:text-base">{results.interpretation}</p>
                         </div>
 
-                        <PillarBar label="Bedrock (Trust)" value={results.scores.b} color="#002147" />
-                        <PillarBar label="Fuel (Velocity)" value={results.scores.f} color="#C5A059" />
-                        <PillarBar label="Purpose (Why)" value={results.scores.p} color="#64748b" />
+                        <div className="grid grid-cols-3 gap-6">
+                            <PillarBar label="Bedrock" value={results.scores.b} color="#002147" />
+                            <PillarBar label="Fuel" value={results.scores.f} color="#C5A059" />
+                            <PillarBar label="Purpose" value={results.scores.p} color="#64748b" />
+                        </div>
                     </div>
                     <div className="bg-white p-6 md:p-12 rounded-[24px] md:rounded-[40px] border shadow-xl flex flex-col justify-center h-full relative overflow-hidden min-h-[400px]">
                         <div className="absolute top-0 right-0 p-8 opacity-5 text-[#002147]"><Target size={150}/></div>
@@ -367,28 +369,34 @@ export default function App() {
             <div className="report-slide bg-[#FAF9F6] p-8 md:p-24 border-t-[10px] md:border-t-[14px] border-[#002147] shadow-2xl min-h-auto md:min-h-[720px] rounded-[24px] md:rounded-none flex flex-col">
                 <h2 className="text-4xl font-serif font-bold text-[#002147] mb-12 border-b pb-8">Next Steps: Action Beats Intention</h2>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8 flex-1">
-                    <div className="bg-white p-10 rounded-[32px] border shadow-sm flex flex-col">
-                      <div className="flex items-center gap-3 mb-6">
-                        <div className="w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center text-[#002147] font-black text-sm">01</div>
-                        <h4 className="font-bold text-lg text-[#002147]">Immediate (Week 1)</h4>
+                    {[
+                      { 
+                        num: '01', 
+                        title: 'Immediate (Week 1)', 
+                        text: `Schedule a 1:1 diagnostic debrief with your Academy coach to unpack your ${results.id === 'ACCIDENTAL' || results.id === 'BUREAUCRAT' || results.id === 'BURNOUT' ? results.name : results.name} profile and set primary targets.`,
+                        action: 'Book Session'
+                      },
+                      { 
+                        num: '02', 
+                        title: 'Short-Term (30 Days)', 
+                        text: 'Complete Module 3: Lean Retail Execution. Track one primary KPI daily and conduct one weekly agile retrospective on the floor.' 
+                      },
+                      { 
+                        num: '03', 
+                        title: 'Medium-Term (90 Days)', 
+                        text: 'Remeasure using the X-Ray. Target: Pillar score increase of >20%. Unlock Module 5 once your baseline velocity has stabilized.',
+                        dark: true
+                      }
+                    ].map((step, idx) => (
+                      <div key={idx} className={`${step.dark ? 'bg-[#002147] text-white shadow-xl' : 'bg-white border shadow-sm'} p-10 rounded-[32px] flex flex-col`}>
+                        <div className="flex items-center gap-3 mb-6">
+                          <div className={`${step.dark ? 'bg-white/10 text-[#C5A059]' : 'bg-slate-50 text-[#002147]'} w-10 h-10 rounded-xl flex items-center justify-center font-black text-sm`}>{step.num}</div>
+                          <h4 className="font-bold text-lg">{step.title}</h4>
+                        </div>
+                        <p className={`${step.dark ? 'text-blue-100/70' : 'text-slate-500'} leading-relaxed text-sm mb-8`}>{step.text}</p>
+                        {step.action && <button className="mt-auto text-[#C5A059] font-black uppercase text-[10px] tracking-widest flex items-center gap-2 hover:translate-x-1 transition-transform">{step.action} <ChevronRight size={14}/></button>}
                       </div>
-                      <p className="text-slate-500 leading-relaxed text-sm">Schedule a 1:1 diagnostic debrief with your Academy coach to unpack your <strong>{results.name}</strong> profile and set primary targets.</p>
-                      <button className="mt-auto pt-6 text-[#C5A059] font-black uppercase text-[10px] tracking-widest flex items-center gap-2 hover:translate-x-1 transition-transform">Book Session <ChevronRight size={14}/></button>
-                    </div>
-                    <div className="bg-white p-10 rounded-[32px] border shadow-sm flex flex-col">
-                      <div className="flex items-center gap-3 mb-6">
-                        <div className="w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center text-[#002147] font-black text-sm">02</div>
-                        <h4 className="font-bold text-lg text-[#002147]">Short-Term (30 Days)</h4>
-                      </div>
-                      <p className="text-slate-500 leading-relaxed text-sm">Complete Module 3: Lean Retail Execution. Track one primary KPI daily and conduct one weekly agile retrospective on the floor.</p>
-                    </div>
-                    <div className="bg-[#002147] p-10 rounded-[32px] shadow-xl flex flex-col text-white">
-                      <div className="flex items-center gap-3 mb-6">
-                        <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center text-[#C5A059] font-black text-sm">03</div>
-                        <h4 className="font-bold text-lg">Medium-Term (90 Days)</h4>
-                      </div>
-                      <p className="text-blue-100/70 leading-relaxed text-sm">Remeasure using the X-Ray. Target: Pillar score increase of >20%. Unlock Module 5 once your baseline velocity has stabilized.</p>
-                    </div>
+                    ))}
                 </div>
                 <div className="mt-12 bg-white p-8 rounded-3xl border flex items-center justify-between">
                     <div className="flex items-center gap-6">
@@ -425,20 +433,20 @@ export default function App() {
     <div className="min-h-screen bg-slate-50 p-4 md:p-10 text-[#002147]">
         <div className="max-w-7xl mx-auto">
             <div className="flex justify-between items-center mb-10">
-                <div className="flex items-center gap-4"><BarChart3 className="text-[#C5A059]" size={24} /><h1 className="text-2xl md:text-3xl font-serif font-bold tracking-tight">Campus Admin</h1></div>
-                <button onClick={()=>setView('welcome')} className="font-bold text-[#C5A059] flex items-center gap-2 bg-white px-4 py-2 rounded-lg border shadow-sm"><ArrowLeft size={16}/> Back</button>
+                <div className="flex items-center gap-4"><BarChart3 className="text-[#C5A059]" size={24} /><h1 className="text-2xl md:text-3xl font-serif font-bold tracking-tight">Team Dashboard</h1></div>
+                <button onClick={()=>setView('welcome')} className="font-bold text-[#C5A059] flex items-center gap-2 bg-white px-4 py-2 rounded-lg border shadow-sm"><ArrowLeft size={16}/> Exit Dashboard</button>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
               <div className="bg-white p-8 rounded-3xl shadow-sm border col-span-1">
-                <p className="text-[10px] font-black uppercase text-slate-400 mb-2">Total Diagnostics</p>
-                <p className="text-4xl font-serif font-black">{assessments.length}</p>
+                <p className="text-[10px] font-black uppercase text-slate-400 mb-2">Total Team Syncs</p>
+                <p className="text-4xl font-serif font-black">{filteredAssessments.length}</p>
               </div>
               <div className="bg-white p-8 rounded-3xl shadow-sm border col-span-2 relative">
-                <p className="text-[10px] font-black uppercase text-slate-400 mb-2 tracking-widest">Team Search & Code Filter</p>
+                <p className="text-[10px] font-black uppercase text-slate-400 mb-2 tracking-widest">Manager Search & Filter</p>
                 <div className="flex gap-4">
                     <div className="relative flex-1">
-                        <input type="text" value={managerSearch} onChange={(e)=>setManagerSearch(e.target.value)} placeholder="Enter Code (e.g. LONDON) or Name..." className="w-full p-4 pl-12 bg-slate-50 border rounded-xl outline-none focus:border-[#C5A059] font-bold" />
+                        <input type="text" value={managerSearch} onChange={(e)=>setManagerSearch(e.target.value)} placeholder="Enter Store Code or Leader Name..." className="w-full p-4 pl-12 bg-slate-50 border rounded-xl outline-none focus:border-[#C5A059] font-bold" />
                         <Search className="absolute left-4 top-4 text-slate-300" size={20}/>
                     </div>
                     {managerSearch && <button onClick={()=>setManagerSearch("")} className="text-xs font-black uppercase text-[#C5A059]">Clear</button>}
@@ -447,14 +455,14 @@ export default function App() {
             </div>
 
             <div className="bg-white rounded-[24px] md:rounded-[40px] shadow-sm border overflow-hidden overflow-x-auto">
-                <table className="w-full text-left"><thead className="bg-slate-50 border-b"><tr><th className="p-4 md:p-8 uppercase text-[10px] font-black text-slate-400">Leader</th><th className="p-4 md:p-8 uppercase text-[10px] font-black text-slate-400">Team Code</th><th className="p-4 md:p-8 uppercase text-[10px] font-black text-slate-400">Archetype</th><th className="p-4 md:p-8 uppercase text-[10px] font-black text-slate-400">Scores</th><th className="p-8 hidden md:table-cell uppercase text-[10px] font-black text-slate-400">Date</th></tr></thead>
+                <table className="w-full text-left"><thead className="bg-slate-50 border-b"><tr><th className="p-4 md:p-8 uppercase text-[10px] font-black text-slate-400">Leader</th><th className="p-4 md:p-8 uppercase text-[10px] font-black text-slate-400">Team Code</th><th className="p-4 md:p-8 uppercase text-[10px] font-black text-slate-400">Archetype</th><th className="p-4 md:p-8 uppercase text-[10px] font-black text-slate-400 text-center">Scores</th><th className="p-8 hidden md:table-cell uppercase text-[10px] font-black text-slate-400">Date</th></tr></thead>
                 <tbody className="divide-y divide-slate-50">
-                    {filteredAssessments.length === 0 ? <tr><td colSpan="5" className="p-20 text-center text-slate-400 italic font-serif">Waiting for cloud data...</td></tr> : filteredAssessments.map(e => (
+                    {filteredAssessments.length === 0 ? <tr><td colSpan="5" className="p-20 text-center text-slate-400 italic font-serif">Enter a team code to see results.</td></tr> : filteredAssessments.map(e => (
                         <tr key={e.id} className="hover:bg-slate-50/50 transition-colors">
                             <td className="p-4 md:p-8 font-bold text-sm md:text-lg capitalize">{e.userName}</td>
                             <td className="p-4 md:p-8"><span className="px-3 py-1 bg-slate-100 rounded text-xs font-black">{e.teamCode}</span></td>
-                            <td className="p-4 md:p-8"><span className="px-2 py-1 rounded text-[10px] font-black uppercase border" style={{color: ARCHETYPES[e.archetype]?.color, borderColor: ARCHETYPES[e.archetype]?.color}}>{e.archetype}</span></td>
-                            <td className="p-4 md:p-8 font-mono text-[10px] md:text-xs">{e.scores?.b}% / {e.scores?.f}% / {e.scores?.p}%</td>
+                            <td className="p-4 md:p-8"><span className="px-2 py-1 rounded text-[10px] font-black uppercase border" style={{color: ARCHETYPES[e.archetype]?.color, borderColor: ARCHETYPES[e.archetype]?.color}}>{ARCHETYPES[e.archetype]?.name || e.archetype}</span></td>
+                            <td className="p-4 md:p-8 font-mono text-[10px] md:text-xs text-center">{e.scores?.b}% / {e.scores?.f}% / {e.scores?.p}%</td>
                             <td className="hidden md:table-cell p-8 text-slate-300 text-sm">{e.timestamp ? new Date(e.timestamp).toLocaleDateString() : 'N/A'}</td>
                         </tr>
                     ))}
