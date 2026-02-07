@@ -4,7 +4,8 @@ import {
   ChevronRight, RefreshCw, Printer, Target, Save, 
   CheckCircle2, BarChart3, Lock, ArrowLeft, BookOpen, 
   PlayCircle, GraduationCap, Users, LayoutDashboard,
-  Activity, Calendar, ShieldCheck, TrendingUp, Search, User
+  Activity, Calendar, ShieldCheck, TrendingUp, Search, User,
+  ArrowRight
 } from 'lucide-react';
 import { initializeApp, getApps } from 'firebase/app';
 import { getAuth, signInAnonymously, onAuthStateChanged } from 'firebase/auth';
@@ -21,7 +22,6 @@ const initFirebase = () => {
     if (rawConfig) {
       let config = rawConfig;
       if (typeof rawConfig === 'string') {
-        // Self-healing cleaning of the config string
         const cleaned = rawConfig.trim()
           .replace(/;$/, '')
           .replace(/^[^{]*/, '')
@@ -39,13 +39,63 @@ const initFirebase = () => {
 
 initFirebase();
 
-// --- DATA MODEL ---
+// --- DATA MODEL (Cleaned & Demo Optimized) ---
 const ARCHETYPES = {
-  SOLID: { id: 'SOLID', name: 'Solid Foundation', color: '#059669', icon: <Trophy className="w-10 h-10 md:w-12 md:h-12" />, status: "Legacy Ready", description: "Equilibrium across all three pillars. You drive exceptional results while maintaining deep trust.", prescription: "Ready for multi-unit leadership. Focus on scaling the BFP framework through mentorship.", striveFor: "Legacy Scaling" },
-  BUREAUCRAT: { id: 'BUREAUCRAT', name: 'The Bureaucrat', color: '#2563eb', icon: <ShieldAlert className="w-10 h-10 md:w-12 md:h-12" />, status: "Stagnant", description: "Trust is present, but velocity is low. Processes are prioritized over results.", prescription: "Inject Fuel immediately. Implement aggressive KPI targets and agile feedback loops.", striveFor: "Fuel Injection" },
-  BURNOUT: { id: 'BURNOUT', name: 'Burnout Driver', color: '#f97316', icon: <Zap className="w-10 h-10 md:w-12 md:h-12" />, status: "Human Debt High", description: "KPIs met through brute force. High velocity but dangerously low Bedrock.", prescription: "Recover Purpose. Shift from 'Command & Control' to 'Clarity & Care' immediately.", striveFor: "Purpose Recovery" },
-  VISIONARY: { id: 'VISIONARY', name: 'Performative Visionary', color: '#9333ea', icon: <Compass className="w-10 h-10 md:w-12 md:h-12" />, status: "Hollow Foundation", description: "Charismatic but fails in execution. The team loves the dream but is exhausted by reality.", prescription: "Stabilize Bedrock. Stop selling the future and start fixing the present systems.", striveFor: "Structural Integrity" },
-  ACCIDENTAL: { id: 'ACCIDENTAL', name: 'The Accidental Leader', color: '#dc2626', icon: <AlertTriangle className="w-10 h-10 md:w-12 md:h-12" />, status: "Critical Risk", description: "Technical expert leading on instinct. Survival mode across all pillars.", prescription: "BFP Foundations. Enrollment in radical ownership and leadership basics is mandatory.", striveFor: "Core BFP Foundations" }
+  SOLID: { 
+    id: 'SOLID', 
+    name: 'Solid Foundation', 
+    color: '#059669', 
+    icon: <Trophy className="w-10 h-10 md:w-12 md:h-12" />, 
+    status: "Legacy Ready", 
+    quote: "Equilibrium across all three pillars. You drive exceptional results while maintaining deep trust.",
+    meaning: "You are operating at the highest level, balancing humanity with ruthless execution. Your next challenge is scaling this culture beyond yourself.",
+    prescription: "Ready for multi-unit leadership. Focus on scaling the BFP framework through mentorship.", 
+    striveFor: "Legacy Scaling" 
+  },
+  BUREAUCRAT: { 
+    id: 'BUREAUCRAT', 
+    name: 'The Bureaucrat', 
+    color: '#2563eb', 
+    icon: <ShieldAlert className="w-10 h-10 md:w-12 md:h-12" />, 
+    status: "Stagnant", 
+    quote: "Trust is present, but velocity is low. Processes are prioritized over results.",
+    meaning: "You’ve created a safe space, but the team is coasting. Without injecting operational urgency, you are losing ground to faster competitors.",
+    prescription: "Inject Fuel immediately. Implement aggressive KPI targets and agile feedback loops.", 
+    striveFor: "Fuel Injection" 
+  },
+  BURNOUT: { 
+    id: 'BURNOUT', 
+    name: 'Burnout Driver', 
+    color: '#f97316', 
+    icon: <Zap className="w-10 h-10 md:w-12 md:h-12" />, 
+    status: "Human Debt High", 
+    quote: "KPIs met through brute force. High velocity but dangerously low Bedrock.",
+    meaning: "You’re keeping the store running through sheer effort, but without a repeatable leadership blueprint, you are building on a foundation of human debt.",
+    prescription: "Recover Purpose. Shift from 'Command & Control' to 'Clarity & Care' immediately.", 
+    striveFor: "Purpose Recovery" 
+  },
+  VISIONARY: { 
+    id: 'VISIONARY', 
+    name: 'Performative Visionary', 
+    color: '#9333ea', 
+    icon: <Compass className="w-10 h-10 md:w-12 md:h-12" />, 
+    status: "Hollow Foundation", 
+    quote: "Charismatic but fails in execution. The team loves the dream but is exhausted by reality.",
+    meaning: "The team is inspired by the mission but demoralized by the lack of follow-through and systemic reliability on the retail floor.",
+    prescription: "Stabilize Bedrock. Stop selling the future and start fixing the present systems.", 
+    striveFor: "Structural Integrity" 
+  },
+  ACCIDENTAL: { 
+    id: 'ACCIDENTAL', 
+    name: 'The Accidental Leader', 
+    color: '#dc2626', 
+    icon: <AlertTriangle className="w-10 h-10 md:w-12 md:h-12" />, 
+    status: "Critical Risk", 
+    quote: "Technical expert leading on instinct. Survival mode across all pillars.",
+    meaning: "You are leading by instinct in a high-pressure environment, which is causing you to trade long-term stability for short-term survival.",
+    prescription: "BFP Foundations. Enrollment in radical ownership and leadership basics is mandatory.", 
+    striveFor: "Core BFP Foundations" 
+  }
 };
 
 const CURRICULUM = {
@@ -137,7 +187,7 @@ export default function App() {
     setIsSaving(true);
     try {
       await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'assessments'), {
-        userName, 
+        userName: userName.charAt(0).toUpperCase() + userName.slice(1), 
         teamCode: teamCode.trim().toUpperCase(), 
         archetype: results.id, 
         scores: results.scores, 
@@ -155,15 +205,14 @@ export default function App() {
       <div className={`flex justify-between font-black uppercase mb-1 text-slate-400 ${small ? 'text-[8px]' : 'text-[10px]'}`}>
         <span>{label}</span><span>{value}%</span>
       </div>
-      <div className={`${small ? 'h-1' : 'h-2 md:h-2.5'} bg-slate-100 rounded-full overflow-hidden`}>
+      <div className={`${small ? 'h-1.5' : 'h-2 md:h-3'} bg-slate-100 rounded-full overflow-hidden`}>
         <div className="h-full transition-all duration-1000" style={{ width: `${value}%`, backgroundColor: color }} />
       </div>
     </div>
   );
 
-  // --- RENDER LOGIC (VIEWS) ---
+  // --- RENDER LOGIC ---
 
-  // VIEW 1: WELCOME
   if (view === 'welcome') return (
     <div className="min-h-screen bg-[#FAF9F6] flex flex-col items-center justify-center p-4 md:p-6 text-[#002147]">
       <div className="max-w-xl w-full bg-white p-8 md:p-16 rounded-[40px] shadow-2xl border-t-[12px] border-[#002147] text-center">
@@ -171,12 +220,12 @@ export default function App() {
         <h1 className="text-4xl md:text-6xl font-serif font-black mb-10 leading-tight">Leadership Diagnostic</h1>
         <div className="space-y-4 mb-8">
             <div className="text-left">
-                <label className="text-[10px] font-black uppercase text-slate-400 ml-2 mb-1 block">Your Identity</label>
+                <label className="text-[10px] font-black uppercase text-slate-400 ml-2 mb-1 block tracking-widest">Your Identity</label>
                 <input type="text" value={userName} onChange={(e)=>setUserName(e.target.value)} placeholder="Full Name..." className="w-full p-5 border-2 rounded-2xl font-bold outline-none focus:border-[#C5A059] transition-all" />
             </div>
             <div className="text-left relative">
-                <label className="text-[10px] font-black uppercase text-slate-400 ml-2 mb-1 block">Team / Store Code</label>
-                <input type="text" value={teamCode} onChange={(e)=>setTeamCode(e.target.value)} placeholder="e.g. STORE101" className="w-full p-5 border-2 rounded-2xl font-bold outline-none focus:border-[#C5A059] transition-all uppercase" />
+                <label className="text-[10px] font-black uppercase text-slate-400 ml-2 mb-1 block tracking-widest">Team / Store Code</label>
+                <input type="text" value={teamCode} onChange={(e)=>setTeamCode(e.target.value)} placeholder="Optional (e.g. STORE101)" className="w-full p-5 border-2 rounded-2xl font-bold outline-none focus:border-[#C5A059] transition-all uppercase" />
                 {teamCode.length > 2 && (
                     <button onClick={()=>setView('team_dashboard')} className="absolute right-4 bottom-4 text-[#C5A059] font-black text-[10px] uppercase flex items-center gap-1 hover:text-[#002147] transition-colors">
                         <LayoutDashboard size={14}/> View Team Insight
@@ -190,7 +239,6 @@ export default function App() {
     </div>
   );
 
-  // VIEW 2: QUIZ
   if (view === 'quiz') return (
     <div className="min-h-screen bg-[#FAF9F6] flex flex-col items-center justify-center p-4 text-[#002147]">
       <div className="max-w-2xl w-full bg-white p-6 md:p-14 rounded-[32px] md:rounded-[40px] shadow-2xl border relative overflow-hidden">
@@ -211,7 +259,6 @@ export default function App() {
     </div>
   );
 
-  // VIEW 3: RESULTS & PDF
   if (view === 'results' && results) return (
     <div className="min-h-screen bg-[#cbd5e1] p-4 md:py-12 md:px-6 overflow-x-hidden">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center mb-6 md:mb-10 gap-3 print:hidden">
@@ -221,50 +268,75 @@ export default function App() {
             </div>
             <button onClick={()=>{setAnswers({}); setCurrentStep(0); setView('welcome');}} className="w-full md:w-auto font-bold text-[#002147] bg-white/50 px-6 py-3 rounded-full hover:bg-white transition-all"><RefreshCw size={16} className="inline mr-2"/> Restart</button>
         </div>
+
         <div className="max-w-[1280px] mx-auto space-y-6 md:space-y-12">
-            {/* Slide 1 */}
+            {/* SLIDE 1: COVER */}
             <div className="report-slide bg-[#FAF9F6] p-8 md:p-24 border-t-[14px] border-[#002147] shadow-2xl flex flex-col justify-center min-h-[400px] md:min-h-[720px] rounded-[32px] md:rounded-none">
-                <p className="uppercase tracking-[0.3em] text-[#C5A059] font-black text-[10px] md:text-sm mb-4">Confidential Diagnostic</p>
+                <p className="uppercase tracking-[0.4em] text-[#C5A059] font-black text-[10px] md:text-sm mb-4">Confidential Diagnostic</p>
                 <h1 className="text-4xl md:text-8xl font-serif font-black text-[#002147] mb-6 md:mb-10 leading-[1.1]">Worthy Retail<br/>X-Ray Profile</h1>
-                <p className="text-lg md:text-3xl italic text-slate-500">Prepared for: <span className="font-bold text-[#002147]">{userName}</span></p>
+                <p className="text-lg md:text-3xl italic text-slate-500">Prepared for: <span className="font-bold text-[#002147]">{userName.charAt(0).toUpperCase() + userName.slice(1)}</span></p>
             </div>
-            {/* Slide 2 */}
+
+            {/* SLIDE 2: ANALYSIS */}
             <div className="report-slide bg-[#FAF9F6] p-8 md:p-24 border-t-[14px] border-[#002147] shadow-2xl min-h-auto md:min-h-[720px] rounded-[32px] md:rounded-none">
                 <h2 className="text-2xl md:text-4xl font-serif font-bold text-[#002147] mb-6 md:mb-12 border-b pb-8 flex justify-between items-center">Analysis <span className="text-[10px] font-black uppercase text-slate-300 tracking-widest">BFP Framework</span></h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-20 items-start">
-                    <div>
-                        <div className="flex items-center gap-4 mb-10"><div className="p-3 bg-white shadow-md rounded-xl text-[#002147] border">{results.icon}</div>
-                            <h3 className="text-2xl md:text-4xl font-serif font-black text-[#002147]">{results.name}</h3>
+                    <div className="flex flex-col h-full">
+                        <div className="flex items-center gap-4 mb-6 md:mb-10">
+                            <div className="p-3 bg-white shadow-md rounded-xl text-[#002147] border">{results.icon}</div>
+                            <div>
+                                <p className="text-[10px] font-black uppercase text-[#C5A059] tracking-widest mb-1">Archetype</p>
+                                <h3 className="text-2xl md:text-4xl font-serif font-black text-[#002147]">{results.name}</h3>
+                            </div>
                         </div>
-                        <p className="text-base md:text-2xl text-slate-600 italic mb-12 leading-relaxed">"{results.description}"</p>
-                        <PillarBar label="Bedrock" value={results.scores.b} color="#002147" />
-                        <PillarBar label="Fuel" value={results.scores.f} color="#C5A059" />
-                        <PillarBar label="Purpose" value={results.scores.p} color="#64748b" />
+                        <div className="space-y-8 flex-grow">
+                          <p className="text-base md:text-2xl text-slate-600 italic leading-relaxed font-medium">"{results.quote}"</p>
+                          <div className="bg-slate-50 p-6 rounded-3xl border border-slate-100">
+                             <p className="text-[10px] font-black uppercase text-[#C5A059] tracking-widest mb-3">What this means for you</p>
+                             <p className="text-sm md:text-lg text-slate-500 leading-relaxed">{results.meaning}</p>
+                          </div>
+                        </div>
+                        <div className="mt-10">
+                            <PillarBar label="Bedrock (Trust)" value={results.scores.b} color="#002147" />
+                            <PillarBar label="Fuel (Velocity)" value={results.scores.f} color="#C5A059" />
+                            <PillarBar label="Purpose (Why)" value={results.scores.p} color="#64748b" />
+                        </div>
                     </div>
-                    <div className="bg-white p-6 md:p-12 rounded-[40px] border shadow-xl flex flex-col justify-center h-full">
-                        <h4 className="text-xl md:text-2xl font-serif font-bold mb-6 text-[#002147]">Strive For: {results.striveFor}</h4>
+                    <div className="bg-white p-6 md:p-12 rounded-[40px] border shadow-xl flex flex-col justify-center h-full relative overflow-hidden">
+                        <div className="absolute top-0 right-0 p-8 opacity-5"><Target size={150}/></div>
+                        <p className="text-[10px] font-black uppercase tracking-widest text-[#C5A059] mb-4">Strategic Priority</p>
+                        <h4 className="text-xl md:text-3xl font-serif font-bold mb-6 text-[#002147]">Strive For: {results.striveFor}</h4>
                         <p className="text-slate-500 text-sm md:text-xl mb-10 leading-relaxed">{results.prescription}</p>
                         <div className="flex items-center gap-3 font-bold text-[#002147] border-t pt-8 text-xs md:text-base"><Target className="text-[#C5A059]" size={20}/> Phase I Optimization</div>
                     </div>
                 </div>
             </div>
-            {/* Slide 3 */}
+
+            {/* SLIDE 3: ROADMAP */}
             <div className="report-slide bg-[#FAF9F6] p-8 md:p-24 border-t-[14px] border-[#C5A059] shadow-2xl min-h-auto md:min-h-[720px] rounded-[32px] md:rounded-none">
-                <div className="flex items-center gap-4 mb-10 border-b pb-8"><div className="bg-[#002147] text-[#C5A059] p-4 rounded-full shadow-lg"><BookOpen size={32} /></div><h2 className="text-2xl md:text-4xl font-serif font-bold text-[#002147]">The Campus Roadmap</h2></div>
+                <div className="flex items-center gap-4 mb-10 border-b pb-8">
+                  <div className="bg-[#002147] text-[#C5A059] p-4 rounded-full shadow-lg"><BookOpen size={32} /></div>
+                  <h2 className="text-2xl md:text-4xl font-serif font-bold text-[#002147]">The Campus Roadmap</h2>
+                </div>
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
                   <div className="lg:col-span-5 bg-white p-8 md:p-12 rounded-[48px] border shadow-xl text-center flex flex-col items-center justify-center">
                     <GraduationCap size={64} className="text-[#002147] mb-6" />
-                    <h3 className="text-2xl md:text-3xl font-serif font-bold text-[#002147] mb-4">{CURRICULUM[results.lowestPillar].title}</h3>
-                    <p className="text-slate-500 text-sm md:text-base">Targeted modules to stabilize your foundational performance.</p>
+                    <p className="text-[10px] font-black uppercase text-slate-400 mb-3 tracking-widest">Priority Focus Pillar</p>
+                    <h3 className="text-2xl md:text-4xl font-serif font-bold text-[#002147] mb-4">{CURRICULUM[results.lowestPillar].title.split(':')[0]}</h3>
+                    <p className="text-slate-500 text-sm md:text-base leading-relaxed">Your diagnostic indicates a structural fracture within this pillar. We suggest starting your masterclass journey here to stabilize the foundation.</p>
                   </div>
                   <div className="lg:col-span-7 flex flex-col gap-4">
+                    <p className="text-[10px] font-black uppercase text-slate-400 mb-2 tracking-widest">Targeted Learning Modules</p>
                     {CURRICULUM[results.lowestPillar].modules.map((mod, idx) => (
                       <div key={idx} className="bg-white p-6 md:p-8 rounded-3xl border hover:border-[#C5A059] transition-all flex items-start gap-5 group shadow-sm">
-                        <div className="bg-slate-50 text-slate-300 group-hover:bg-[#C5A059] group-hover:text-white p-4 rounded-2xl transition-all"><PlayCircle size={24} /></div>
-                        <div><h4 className="font-bold text-[#002147] text-lg md:text-xl">{mod.name}</h4><p className="text-sm md:text-base text-slate-500 mt-2 leading-relaxed">{mod.desc}</p></div>
+                        <div className="bg-slate-50 text-slate-300 group-hover:bg-[#C5A059] group-hover:text-white p-4 rounded-2xl transition-all shadow-sm"><PlayCircle size={24} /></div>
+                        <div>
+                          <h4 className="font-bold text-[#002147] text-lg md:text-xl">{mod.name}</h4>
+                          <p className="text-sm md:text-base text-slate-500 mt-2 leading-relaxed">{mod.desc}</p>
+                        </div>
                       </div>
                     ))}
-                    <button className="bg-[#002147] text-white px-10 py-5 rounded-full font-bold shadow-2xl flex items-center justify-center gap-3 active:scale-95 transition-all mt-4">Enroll in Masterclass <ChevronRight size={18} /></button>
+                    <button className="bg-[#002147] text-white px-10 py-5 rounded-full font-bold shadow-2xl flex items-center justify-center gap-3 active:scale-95 transition-all mt-4 group">Enroll in Masterclass <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" /></button>
                   </div>
                 </div>
             </div>
@@ -273,18 +345,11 @@ export default function App() {
     </div>
   );
 
-  // VIEW 4: TEAM DASHBOARD (The one that was blank)
   if (view === 'team_dashboard') return (
     <div className="min-h-screen bg-slate-50 p-4 md:p-10 text-[#002147]">
         <div className="max-w-7xl mx-auto">
             <div className="flex justify-between items-center mb-10">
-                <div className="flex items-center gap-4">
-                    <div className="bg-[#002147] text-[#C5A059] p-3 rounded-2xl shadow-lg"><Activity size={24} /></div>
-                    <div>
-                        <h1 className="text-2xl font-serif font-bold uppercase tracking-tight">Team: {teamCode}</h1>
-                        <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">Aggregated Performance Insight</p>
-                    </div>
-                </div>
+                <div className="flex items-center gap-4"><div className="bg-[#002147] text-[#C5A059] p-3 rounded-2xl shadow-lg"><Activity size={24} /></div><div><h1 className="text-2xl font-serif font-bold uppercase tracking-tight">Team: {teamCode}</h1><p className="text-xs text-slate-400 font-bold uppercase tracking-widest">Aggregated Performance Insight</p></div></div>
                 <button onClick={()=>setView('welcome')} className="bg-white px-6 py-3 rounded-xl border shadow-sm font-bold flex items-center gap-2 text-[#C5A059] hover:bg-slate-50 transition-all"><ArrowLeft size={18}/> Back</button>
             </div>
 
@@ -352,7 +417,6 @@ export default function App() {
     </div>
   );
 
-  // VIEW 5: ADMIN LOGIN
   if (view === 'login') return (
     <div className="min-h-screen bg-[#FAF9F6] flex items-center justify-center p-6 text-[#002147]">
       <div className="bg-white p-10 rounded-[32px] shadow-xl text-center max-w-sm w-full border">
@@ -365,7 +429,6 @@ export default function App() {
     </div>
   );
 
-  // VIEW 6: MASTER ADMIN DASHBOARD
   if (view === 'admin') return (
     <div className="min-h-screen bg-slate-50 p-4 md:p-10 text-[#002147]">
         <div className="max-w-7xl mx-auto">
@@ -411,7 +474,6 @@ export default function App() {
     </div>
   );
 
-  // Catch-all loading state (prevents blank screen during initial boot)
   return (
     <div className="min-h-screen bg-[#FAF9F6] flex flex-col items-center justify-center p-6 text-[#002147]">
         <Activity className="animate-spin text-[#C5A059] mb-4" size={48} />
