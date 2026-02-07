@@ -3,7 +3,7 @@ import {
   Trophy, ShieldAlert, Zap, Compass, AlertTriangle, 
   ChevronRight, RefreshCw, Printer, Target, Save, 
   CheckCircle2, BarChart3, Lock, ArrowLeft, BookOpen, 
-  PlayCircle, GraduationCap
+  PlayCircle, GraduationCap, Calendar, Mail
 } from 'lucide-react';
 import { initializeApp, getApps } from 'firebase/app';
 import { getAuth, signInAnonymously, onAuthStateChanged } from 'firebase/auth';
@@ -29,17 +29,88 @@ const initFirebase = () => {
 initFirebase();
 
 const ARCHETYPES = {
-  SOLID: { id: 'SOLID', name: 'Solid Foundation', color: '#059669', icon: <Trophy className="w-10 h-10 md:w-12 md:h-12" />, description: "Equilibrium across all three pillars. You drive exceptional results while maintaining deep trust.", prescription: "Ready for multi-unit leadership. Focus on scaling the BFP framework through mentorship.", striveFor: "Legacy Scaling" },
-  BUREAUCRAT: { id: 'BUREAUCRAT', name: 'The Bureaucrat', color: '#2563eb', icon: <ShieldAlert className="w-10 h-10 md:w-12 md:h-12" />, description: "Trust is present, but velocity is low. Processes are prioritized over results.", prescription: "Inject Fuel immediately. Implement aggressive KPI targets and agile feedback loops.", striveFor: "Fuel Injection" },
-  BURNOUT: { id: 'BURNOUT', name: 'Burnout Driver', color: '#f97316', icon: <Zap className="w-10 h-10 md:w-12 md:h-12" />, description: "KPIs met through brute force. High velocity but dangerously low Bedrock.", prescription: "Recover Purpose. Shift from 'Command & Control' to 'Clarity & Care' immediately.", striveFor: "Purpose Recovery" },
-  VISIONARY: { id: 'VISIONARY', name: 'Performative Visionary', color: '#9333ea', icon: <Compass className="w-10 h-10 md:w-12 md:h-12" />, description: "Charismatic but fails in execution. The team loves the dream but is exhausted by reality.", prescription: "Stabilize Bedrock. Stop selling the future and start fixing the present systems.", striveFor: "Structural Integrity" },
-  ACCIDENTAL: { id: 'ACCIDENTAL', name: 'The Accidental Leader', color: '#dc2626', icon: <AlertTriangle className="w-10 h-10 md:w-12 md:h-12" />, description: "Technical expert leading on instinct. Survival mode across all pillars.", prescription: "BFP Foundations. Enrollment in radical ownership and leadership basics is mandatory.", striveFor: "Core BFP Foundations" }
+  SOLID: { 
+    id: 'SOLID', 
+    name: 'Solid Foundation', 
+    color: '#059669', 
+    icon: <Trophy className="w-10 h-10 md:w-12 md:h-12" />, 
+    status: "Legacy Ready", 
+    description: "Equilibrium across all three pillars. You drive exceptional results while maintaining deep trust.", 
+    interpretation: "You are operating in a rare state of high-trust and high-velocity. Your challenge isn't fixing a pillar, but preventing complacency. What this means for you: You have moved beyond 'management' and into 'legacy building.' Your focus should now shift toward mentorship and multi-unit influence to scale this culture.",
+    prescription: "Ready for multi-unit leadership. Focus on scaling the BFP framework through mentorship.", 
+    striveFor: "Legacy Scaling" 
+  },
+  BUREAUCRAT: { 
+    id: 'BUREAUCRAT', 
+    name: 'The Bureaucrat', 
+    color: '#2563eb', 
+    icon: <ShieldAlert className="w-10 h-10 md:w-12 md:h-12" />, 
+    status: "Stagnant", 
+    description: "Trust is present, but velocity is low. Processes are prioritized over results.", 
+    interpretation: "Your team trusts you, and your sense of purpose is clear. The constraint is execution speed (Fuel). You likely have strong compliance and process discipline, but decision cycles are slow, KPIs lack bite, and agile iteration is rare. The risk: talented people leave because 'nothing moves fast enough.' The opportunity: you can unlock velocity without sacrificing trust.",
+    prescription: "Inject Fuel immediately. Implement aggressive KPI targets and agile feedback loops.", 
+    striveFor: "Fuel Injection" 
+  },
+  BURNOUT: { 
+    id: 'BURNOUT', 
+    name: 'Burnout Driver', 
+    color: '#f97316', 
+    icon: <Zap className="w-10 h-10 md:w-12 md:h-12" />, 
+    status: "Human Debt High", 
+    description: "KPIs met through brute force. High velocity but dangerously low Bedrock.", 
+    interpretation: "You are achieving results, but at a high human cost. Your team is likely operating on adrenaline or fear, which is creating massive 'Human Debt.' What this means for you: You are facing an imminent cliff of turnover. To save the results, you must stabilize Bedrock by shifting from command-and-control to clarity-and-care.",
+    prescription: "Recover Purpose. Shift from 'Command & Control' to 'Clarity & Care' immediately.", 
+    striveFor: "Purpose Recovery" 
+  },
+  VISIONARY: { 
+    id: 'VISIONARY', 
+    name: 'Performative Visionary', 
+    color: '#9333ea', 
+    icon: <Compass className="w-10 h-10 md:w-12 md:h-12" />, 
+    status: "Hollow Foundation", 
+    description: "Charismatic but fails in execution. The team loves the dream but is exhausted by reality.", 
+    interpretation: "You have a compelling destination but no operational vehicle to get there. What this means for you: While the team is inspired by your 'Why,' they are losing faith in your 'How.' You are currently losing credibility through broken operational promises. Your priority is to stop selling the future and start fixing the systems that deliver today.",
+    prescription: "Stabilize Bedrock. Stop selling the future and start fixing the present systems.", 
+    striveFor: "Structural Integrity" 
+  },
+  ACCIDENTAL: { 
+    id: 'ACCIDENTAL', 
+    name: 'The Accidental Leader', 
+    color: '#dc2626', 
+    icon: <AlertTriangle className="w-10 h-10 md:w-12 md:h-12" />, 
+    status: "Critical Risk", 
+    description: "Technical expert leading on instinct. Survival mode across all pillars.", 
+    interpretation: "You are currently leading on instinct without a structural safety net. Every day feels like survival mode because you lack a leadership blueprint. What this means for you: You are carrying the weight of the store on your own back. By installing the BFP framework, you move from 'exhausted technical expert' to 'empowered retail leader.'",
+    prescription: "BFP Foundations. Enrollment in radical ownership and leadership basics is mandatory.", 
+    striveFor: "Core BFP Foundations" 
+  }
 };
 
 const CURRICULUM = {
-  B: { title: "Bedrock: The Foundation", modules: [{ name: "Module 1: The Safety Gap", desc: "Auditing psychological safety and building the core trust required for retail." }, { name: "Module 2: Truth-Default Culture", desc: "Implementing transparency and communication systems that eliminate floor politics." }] },
-  F: { title: "Fuel: The Velocity", modules: [{ name: "Module 3: Lean Retail Execution", desc: "Removing operational 'red tape' that kills your team's execution speed." }, { name: "Module 4: Agile Decision Loops", desc: "Training staff to solve problems in 60 seconds without needing you." }] },
-  P: { title: "Purpose: The Legacy", modules: [{ name: "Module 5: The 'Why' Hierarchy", desc: "Connecting floor tasks to deep personal and community purpose." }, { name: "Module 6: Ownership Mindset", desc: "Building owner-operators who care about your store's success." }] }
+  B: { 
+    title: "Bedrock: The Foundation", 
+    modules: [
+      { name: "Module 1: The Safety Gap", desc: "Auditing psychological safety and building the core trust required for floor teams." },
+      { name: "Module 5: Strategic Storytelling", desc: "Connecting day-to-day execution to a compelling 'why' that inspires discretionary effort." },
+      { name: "Module 7: Trust Under Pressure", desc: "Maintaining integrity and safety when speed and performance demands intensify." }
+    ] 
+  },
+  F: { 
+    title: "Fuel: The Velocity", 
+    modules: [
+      { name: "Module 3: Lean Retail Execution", desc: "Identifying and removing the operational 'red tape' that kills your team's execution speed." },
+      { name: "Module 5: Strategic Storytelling", desc: "Connecting day-to-day execution to a compelling 'why' that inspires discretionary effort." },
+      { name: "Module 7: Trust Under Pressure", desc: "Maintaining integrity and safety when speed and performance demands intensify." }
+    ] 
+  },
+  P: { 
+    title: "Purpose: The Legacy", 
+    modules: [
+      { name: "Module 6: Ownership Mindset", desc: "Building owner-operators who care about your store's success as much as you do." },
+      { name: "Module 5: Strategic Storytelling", desc: "Connecting day-to-day execution to a compelling 'why' that inspires discretionary effort." },
+      { name: "Module 7: Trust Under Pressure", desc: "Maintaining integrity and safety when speed and performance demands intensify." }
+    ] 
+  }
 };
 
 const QUESTIONS = [
@@ -59,7 +130,7 @@ const QUESTIONS = [
   { id: 14, pillar: 'P', text: "Team treats the store as a legacy." },
   { id: 15, pillar: 'P', text: "Growth is discussed as often as sales." },
   { id: 16, pillar: 'P', text: "Team understands their brand impact." },
-  { id: 17, pillar: 'P', text: "We share a vision of 'Winning'." },
+  { id: 17, pillar: 'P', text: "We share vision of 'Winning'." },
   { id: 18, pillar: 'P', text: "Morale stays high during tough periods." }
 ];
 
@@ -100,31 +171,37 @@ export default function App() {
     else if (b >= 75 && f <= 55) arch = ARCHETYPES.BUREAUCRAT;
     else if (f >= 80 && b <= 65) arch = ARCHETYPES.BURNOUT;
     else if (p >= 80 && b <= 65) arch = ARCHETYPES.VISIONARY;
-    const lowest = [{id: 'B', val: b}, {id: 'F', val: f}, {id: 'P', val: p}].reduce((p, c) => (p.val < c.val) ? p : c);
+    const lowest = [{id: 'B', val: b}, {id: 'F', val: f}, {id: 'P', val: p}].reduce((prev, curr) => (prev.val < curr.val) ? prev : curr);
     return { ...arch, scores: { b, f, p }, lowestPillar: lowest.id };
   }, [answers]);
 
   const saveResults = async () => {
-    if (!db || !user) return alert("System Syncing... Please wait 3 seconds and try again.");
+    if (!db || !user) return alert("System Syncing... please wait 3 seconds.");
     setIsSaving(true);
     try {
       await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'assessments'), {
         userName, archetype: results.id, scores: results.scores, timestamp: new Date().toISOString(), createdAt: serverTimestamp()
       });
-      alert("Success: Results synced to The Campus Dashboard.");
-    } catch (e) { alert("Sync Error: " + e.message); }
+      alert("Success: Results synced to The Campus.");
+    } catch (e) { alert("Sync Failed: " + e.message); }
     setIsSaving(false);
   };
 
   const PillarBar = ({ label, value, color }) => (
-    <div className="w-full mb-4 md:mb-8">
-      <div className="flex justify-between text-[10px] font-black uppercase mb-1 md:mb-2 text-slate-400 tracking-widest">
-        <span>{label}</span>
-        <span>{value}%</span>
+    <div className="w-full mb-4">
+      <div className="flex justify-between text-[10px] font-black uppercase mb-1 text-slate-400 tracking-widest">
+        <span>{label}</span><span>{value}%</span>
       </div>
-      <div className="h-2 md:h-2.5 bg-slate-100 rounded-full overflow-hidden">
+      <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
         <div className="h-full transition-all duration-1000" style={{ width: `${value}%`, backgroundColor: color }} />
       </div>
+    </div>
+  );
+
+  const Footer = ({ page }) => (
+    <div className="mt-auto pt-6 flex justify-between items-center border-t border-slate-100 text-[#cbd5e1] font-black text-[10px] uppercase tracking-[0.3em]">
+      <span>Worthy Retail X-Ray | Confidential</span>
+      <span>Page {page} of 5</span>
     </div>
   );
 
@@ -134,7 +211,7 @@ export default function App() {
         <p className="uppercase tracking-widest text-[#C5A059] font-black text-[10px] md:text-xs mb-4">The Worthy Retail X-Ray</p>
         <h1 className="text-4xl md:text-6xl font-serif font-black mb-8 leading-tight">Leadership Diagnostic</h1>
         <input type="text" value={userName} onChange={(e)=>setUserName(e.target.value)} placeholder="Your Name..." className="w-full p-4 md:p-5 border-2 rounded-2xl text-center mb-6 md:mb-8 font-bold outline-none focus:border-[#C5A059]" />
-        <button disabled={!userName} onClick={()=>setView('quiz')} className="w-full bg-[#002147] text-white py-4 md:py-5 rounded-full font-bold text-lg md:text-xl active:scale-95 transition-all">Start Analysis</button>
+        <button disabled={!userName} onClick={()=>setView('quiz')} className="w-full bg-[#002147] text-white py-4 md:py-5 rounded-full font-bold text-lg md:text-xl disabled:opacity-50 hover:bg-[#C5A059] transition-all active:scale-95">Start Analysis</button>
       </div>
       <button onClick={()=>setView('login')} className="mt-8 md:mt-12 text-slate-300 text-[10px] font-black uppercase tracking-widest flex items-center gap-2 hover:text-[#C5A059] transition-colors"><Lock size={12}/> Admin Portal</button>
     </div>
@@ -182,15 +259,21 @@ export default function App() {
         </div>
 
         <div className="max-w-[1280px] mx-auto space-y-6 md:space-y-12">
+            {/* PAGE 1: COVER */}
             <div className="report-slide bg-[#FAF9F6] p-8 md:p-24 border-t-[10px] md:border-t-[14px] border-[#002147] shadow-2xl flex flex-col justify-center min-h-[400px] md:min-h-[720px] rounded-[24px] md:rounded-none">
-                <p className="uppercase tracking-[0.3em] text-[#C5A059] font-black text-[10px] md:text-sm mb-4">Confidential Diagnostic</p>
-                <h1 className="text-4xl md:text-8xl font-serif font-black text-[#002147] mb-6 md:mb-10 leading-[1.1]">Worthy Retail<br/>X-Ray Profile</h1>
-                <p className="text-lg md:text-3xl italic text-slate-500">Prepared for: <span className="font-bold text-[#002147]">{userName}</span></p>
+                <div className="flex-1 flex flex-col justify-center">
+                  <p className="uppercase tracking-[0.3em] text-[#C5A059] font-black text-[10px] md:text-sm mb-4">Confidential Diagnostic Report</p>
+                  <h1 className="text-4xl md:text-[110px] font-serif font-black text-[#002147] mb-6 md:mb-10 leading-[0.9]">Worthy Retail<br/>X-Ray Profile</h1>
+                  <p className="text-lg md:text-3xl italic text-slate-500">Prepared for: <span className="font-bold text-[#002147]">{userName}</span></p>
+                  <p className="mt-8 text-slate-400 font-bold text-xs uppercase tracking-widest">Generated: {new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
+                </div>
+                <Footer page="1" />
             </div>
 
-            <div className="report-slide bg-[#FAF9F6] p-8 md:p-24 border-t-[10px] md:border-t-[14px] border-[#002147] shadow-2xl min-h-auto md:min-h-[720px] rounded-[24px] md:rounded-none">
-                <h2 className="text-2xl md:text-4xl font-serif font-bold text-[#002147] mb-6 md:mb-12 border-b pb-4 md:pb-8 flex justify-between items-center">Analysis <span className="text-[10px] font-black uppercase text-slate-300 tracking-widest">BFP Framework</span></h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-20 items-start">
+            {/* PAGE 2: ANALYSIS */}
+            <div className="report-slide bg-[#FAF9F6] p-8 md:p-24 border-t-[10px] md:border-t-[14px] border-[#002147] shadow-2xl min-h-auto md:min-h-[720px] rounded-[24px] md:rounded-none flex flex-col">
+                <h2 className="text-2xl md:text-4xl font-serif font-bold text-[#002147] mb-6 md:mb-12 border-b pb-4 md:pb-8 flex justify-between items-center">Analysis <span className="text-[10px] font-black uppercase text-slate-300">BFP Framework</span></h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-20 items-start flex-1">
                     <div className="flex flex-col">
                         <div className="flex items-center gap-4 mb-6 md:mb-10">
                             <div className="p-3 bg-white shadow-md rounded-xl text-[#002147] border">{results.icon}</div>
@@ -200,31 +283,42 @@ export default function App() {
                             </div>
                         </div>
                         <p className="text-base md:text-2xl text-slate-600 italic mb-8 md:mb-12 leading-relaxed">"{results.description}"</p>
+                        
+                        <div className="bg-slate-50 p-8 rounded-3xl mb-8 border border-slate-100">
+                          <p className="text-[10px] font-black uppercase text-[#C5A059] mb-4 tracking-widest">What This Means For You</p>
+                          <p className="text-slate-600 leading-relaxed font-medium">{results.interpretation}</p>
+                        </div>
+
                         <PillarBar label="Bedrock (Trust)" value={results.scores.b} color="#002147" />
                         <PillarBar label="Fuel (Velocity)" value={results.scores.f} color="#C5A059" />
                         <PillarBar label="Purpose (Why)" value={results.scores.p} color="#64748b" />
                     </div>
-                    <div className="bg-white p-6 md:p-12 rounded-[24px] md:rounded-[40px] border shadow-xl flex flex-col justify-center h-full">
-                        <div className="text-[10px] font-black uppercase text-[#C5A059] mb-4">Strategic Priority</div>
+                    <div className="bg-white p-6 md:p-12 rounded-[24px] md:rounded-[40px] border shadow-xl flex flex-col justify-center h-full relative overflow-hidden">
+                        <div className="absolute top-0 right-0 p-8 opacity-5 text-[#002147]"><Target size={150}/></div>
+                        <div className="text-[10px] font-black uppercase tracking-widest text-[#C5A059] mb-4">Strategic Priority</div>
                         <h4 className="text-xl md:text-2xl font-serif font-bold mb-4 md:mb-6 text-[#002147]">Strive For: {results.striveFor}</h4>
                         <p className="text-slate-500 text-sm md:text-xl mb-6 md:mb-10 leading-relaxed">{results.prescription}</p>
                         <div className="flex items-center gap-3 font-bold text-[#002147] border-t pt-6 md:pt-8 text-xs md:text-base"><Target className="text-[#C5A059]" size={20}/> Phase I Optimization</div>
                     </div>
                 </div>
+                <Footer page="2" />
             </div>
 
-            <div className="report-slide bg-[#FAF9F6] p-8 md:p-24 border-t-[10px] md:border-t-[14px] border-[#C5A059] shadow-2xl min-h-auto md:min-h-[720px] rounded-[24px] md:rounded-none">
+            {/* PAGE 3: ROADMAP */}
+            <div className="report-slide bg-[#FAF9F6] p-8 md:p-24 border-t-[10px] md:border-t-[14px] border-[#C5A059] shadow-2xl min-h-auto md:min-h-[720px] rounded-[24px] md:rounded-none flex flex-col">
                 <div className="flex items-center gap-4 mb-10 border-b pb-8">
                   <div className="bg-[#002147] text-[#C5A059] p-4 rounded-full shadow-lg"><BookOpen size={32} /></div>
                   <h2 className="text-2xl md:text-4xl font-serif font-bold text-[#002147]">The Campus Roadmap</h2>
                 </div>
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 flex-1">
                   <div className="lg:col-span-5 bg-white p-8 md:p-12 rounded-[32px] md:rounded-[48px] border shadow-xl text-center flex flex-col items-center justify-center">
                     <GraduationCap size={64} className="text-[#002147] mb-6" />
-                    <h3 className="text-2xl font-serif font-bold text-[#002147] mb-4">{CURRICULUM[results.lowestPillar].title}</h3>
-                    <p className="text-slate-500 text-sm md:text-base">Focus here to stabilize your foundational performance.</p>
+                    <p className="text-xs font-black uppercase text-slate-400 mb-2 tracking-widest">Priority Pillar</p>
+                    <h3 className="text-2xl md:text-3xl font-serif font-bold text-[#002147] mb-4">{CURRICULUM[results.lowestPillar].title.split(':')[0]}</h3>
+                    <p className="text-slate-500 text-sm md:text-base">Your diagnostic indicates a structural fracture within this pillar. We suggest prioritizing these modules to stabilize the foundation.</p>
                   </div>
                   <div className="lg:col-span-7 flex flex-col gap-4">
+                    <p className="text-[10px] font-black uppercase text-[#C5A059] tracking-[0.2em] mb-2">Targeted Learning Journey</p>
                     {CURRICULUM[results.lowestPillar].modules.map((mod, idx) => (
                       <div key={idx} className="bg-white p-6 md:p-8 rounded-3xl border hover:border-[#C5A059] transition-all flex items-start gap-5 group shadow-sm">
                         <div className="bg-slate-50 text-slate-300 group-hover:bg-[#C5A059] group-hover:text-white p-4 rounded-2xl transition-all"><PlayCircle size={24} /></div>
@@ -234,9 +328,58 @@ export default function App() {
                         </div>
                       </div>
                     ))}
-                    <button className="bg-[#002147] text-white px-10 py-5 rounded-full font-bold shadow-2xl flex items-center justify-center gap-3 active:scale-95 transition-all mt-4">Enroll in Masterclass <ChevronRight size={18} /></button>
                   </div>
                 </div>
+                <Footer page="3" />
+            </div>
+
+            {/* PAGE 4: NEXT STEPS */}
+            <div className="report-slide bg-[#FAF9F6] p-8 md:p-24 border-t-[10px] md:border-t-[14px] border-[#002147] shadow-2xl min-h-auto md:min-h-[720px] rounded-[24px] md:rounded-none flex flex-col">
+                <h2 className="text-4xl font-serif font-bold text-[#002147] mb-12 border-b pb-8">Next Steps: Action Beats Intention</h2>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8 flex-1">
+                    <div className="bg-white p-10 rounded-[32px] border shadow-sm flex flex-col">
+                      <div className="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center text-[#002147] mb-6 font-black">01</div>
+                      <h4 className="font-bold text-xl text-[#002147] mb-4">Immediate (Week 1)</h4>
+                      <p className="text-slate-500 leading-relaxed text-sm">Schedule a 1:1 diagnostic debrief with your Academy coach to unpack your <strong>{results.name}</strong> profile and set primary targets.</p>
+                      <button className="mt-auto pt-6 text-[#C5A059] font-black uppercase text-[10px] tracking-widest flex items-center gap-2">Book Session <ChevronRight size={14}/></button>
+                    </div>
+                    <div className="bg-white p-10 rounded-[32px] border shadow-sm flex flex-col">
+                      <div className="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center text-[#002147] mb-6 font-black">02</div>
+                      <h4 className="font-bold text-xl text-[#002147] mb-4">Short-term (30 Days)</h4>
+                      <p className="text-slate-500 leading-relaxed text-sm">Complete Module 3: Lean Retail Execution. Track one primary KPI daily and conduct one weekly agile retrospective.</p>
+                    </div>
+                    <div className="bg-[#002147] p-10 rounded-[32px] shadow-xl flex flex-col text-white">
+                      <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center text-[#C5A059] mb-6 font-black">03</div>
+                      <h4 className="font-bold text-xl mb-4">Medium-term (90 Days)</h4>
+                      <p className="text-blue-100/70 leading-relaxed text-sm">Remeasure using the X-Ray. Target: Pillar score increase of >20%. Unlock Module 5 once baseline velocity stabilizes.</p>
+                    </div>
+                </div>
+                <div className="mt-12 bg-white p-8 rounded-3xl border flex items-center justify-between">
+                    <div className="flex items-center gap-6">
+                        <div className="p-4 bg-slate-50 rounded-2xl text-[#C5A059]"><Mail size={24}/></div>
+                        <div>
+                          <p className="text-xs font-black uppercase text-slate-400 tracking-widest">Support & Guidance</p>
+                          <p className="font-bold text-[#002147]">academy@worthy.co.uk</p>
+                        </div>
+                    </div>
+                    <p className="text-slate-300 font-serif italic italic font-bold">Worthy Retail | The Campus</p>
+                </div>
+                <Footer page="4" />
+            </div>
+
+            {/* PAGE 5: CLOSING */}
+            <div className="report-slide bg-[#FAF9F6] p-8 md:p-24 border-t-[10px] md:border-t-[14px] border-[#C5A059] shadow-2xl flex flex-col justify-center min-h-[400px] md:min-h-[720px] rounded-[24px] md:rounded-none">
+                <div className="flex-1 flex flex-col items-center justify-center text-center">
+                  <div className="w-24 h-24 bg-[#002147] rounded-full flex items-center justify-center text-[#C5A059] mb-10 shadow-xl">
+                    <CheckCircle2 size={48} />
+                  </div>
+                  <h2 className="text-6xl font-serif font-black text-[#002147] mb-6 leading-tight">Your Diagnosis<br/>is Complete</h2>
+                  <p className="text-2xl text-slate-500 max-w-2xl mx-auto leading-relaxed">
+                    Success in retail is built on structural integrity. You now have the blueprint to move from <strong>{results.name}</strong> to a <strong>Solid Foundation</strong>.
+                  </p>
+                  <div className="mt-16 text-[#C5A059] font-black uppercase tracking-[0.4em] text-sm">Action Beats Intention™</div>
+                </div>
+                <Footer page="5" />
             </div>
         </div>
 
@@ -259,7 +402,7 @@ export default function App() {
                 <table className="w-full text-left"><thead className="bg-slate-50 border-b"><tr><th className="p-4 md:p-8 uppercase text-[10px] font-black text-slate-400">Leader</th><th className="p-4 md:p-8 uppercase text-[10px] font-black text-slate-400">Archetype</th><th className="p-4 md:p-8 uppercase text-[10px] font-black text-slate-400">Scores</th><th className="p-8 hidden md:table-cell uppercase text-[10px] font-black text-slate-400">Date</th></tr></thead>
                 <tbody className="divide-y divide-slate-50">
                     {assessments.length === 0 ? <tr><td colSpan="4" className="p-20 text-center text-slate-400 italic font-serif">Waiting for cloud data...</td></tr> : assessments.map(e => (
-                        <tr key={e.id} className="hover:bg-slate-50/50">
+                        <tr key={e.id} className="hover:bg-slate-50/50 transition-colors">
                             <td className="p-4 md:p-8 font-bold text-sm md:text-lg">{e.userName}</td>
                             <td className="p-4 md:p-8"><span className="px-2 py-1 rounded text-[10px] font-black uppercase border" style={{color: ARCHETYPES[e.archetype]?.color, borderColor: ARCHETYPES[e.archetype]?.color}}>{e.archetype}</span></td>
                             <td className="p-4 md:p-8 font-mono text-[10px] md:text-xs">{e.scores?.b}% / {e.scores?.f}% / {e.scores?.p}%</td>
