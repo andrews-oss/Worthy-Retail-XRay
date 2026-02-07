@@ -22,10 +22,7 @@ const initFirebase = () => {
     if (rawConfig) {
       let config = rawConfig;
       if (typeof rawConfig === 'string') {
-        const cleaned = rawConfig.trim()
-          .replace(/;$/, '')
-          .replace(/^[^{]*/, '')
-          .replace(/[^}]*$/, '');
+        const cleaned = rawConfig.trim().replace(/;$/, '').replace(/^[^{]*/, '').replace(/[^}]*$/, '');
         config = JSON.parse(cleaned);
       }
       const app = getApps().length === 0 ? initializeApp(config) : getApps()[0];
@@ -100,7 +97,7 @@ const ARCHETYPES = {
 
 const CURRICULUM = {
   B: { title: "Bedrock: The Foundation", modules: [{ name: "Module 1: The Safety Gap", desc: "Auditing psychological safety and building the core trust required for floor teams." }, { name: "Module 2: Truth-Default Culture", desc: "Implementing transparency and high-integrity communication systems." }] },
-  F: { title: "Fuel: The Velocity", modules: [{ name: "Module 3: Lean Retail Execution", desc: "Removing operational 'red tape' that kills your team's execution speed." }, { name: "Module 4: Agile Decision Loops", desc: "Training staff to solve problems in 60 seconds without needing you." }] },
+  F: { title: "Fuel: The Velocity", modules: [{ name: "Module 3: Lean Retail Execution", desc: "Identifying and removing the operational 'red tape' that kills your team's speed and execution." }, { name: "Module 4: Agile Decision Loops", desc: "Designing fast, feedback-rich decision cycles without losing control." }] },
   P: { title: "Purpose: The Legacy", modules: [{ name: "Module 5: The 'Why' Hierarchy", desc: "Connecting floor tasks to deep personal and community purpose." }, { name: "Module 6: Ownership Mindset", desc: "Building owner-operators who care about your store's success." }] }
 };
 
@@ -183,7 +180,7 @@ export default function App() {
 
   // --- ACTIONS ---
   const saveResults = async () => {
-    if (!db || !user) return alert("System Offline: Waiting for cloud database to respond.");
+    if (!db || !user) return alert("System Offline: Handshaking with cloud...");
     setIsSaving(true);
     try {
       await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'assessments'), {
@@ -194,12 +191,14 @@ export default function App() {
         timestamp: new Date().toISOString(), 
         createdAt: serverTimestamp()
       });
-      alert("SUCCESS: Diagnostic profile synced to The Campus.");
+      alert("SUCCESS: Results synced to The Campus.");
     } catch (e) { alert("Sync Error: " + e.message); }
     setIsSaving(false);
   };
 
-  // --- SUB-COMPONENTS ---
+  // --- HELPERS ---
+  const formattedDate = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+
   const PillarBar = ({ label, value, color, small = false }) => (
     <div className={`w-full ${small ? 'mb-2' : 'mb-4 md:mb-8'}`}>
       <div className={`flex justify-between font-black uppercase mb-1 text-slate-400 ${small ? 'text-[8px]' : 'text-[10px]'}`}>
@@ -211,7 +210,15 @@ export default function App() {
     </div>
   );
 
-  // --- RENDER LOGIC ---
+  const ReportFooter = ({ page }) => (
+    <div className="mt-12 flex justify-between items-center border-t border-slate-100 pt-8 text-[#cbd5e1] font-black text-[10px] uppercase tracking-[0.2em]">
+        <span>Generated: {formattedDate}</span>
+        <span>Worthy Retail X-Ray | Confidential</span>
+        <span>Page {page} of 3</span>
+    </div>
+  );
+
+  // --- VIEWS ---
 
   if (view === 'welcome') return (
     <div className="min-h-screen bg-[#FAF9F6] flex flex-col items-center justify-center p-4 md:p-6 text-[#002147]">
@@ -272,15 +279,18 @@ export default function App() {
         <div className="max-w-[1280px] mx-auto space-y-6 md:space-y-12">
             {/* SLIDE 1: COVER */}
             <div className="report-slide bg-[#FAF9F6] p-8 md:p-24 border-t-[14px] border-[#002147] shadow-2xl flex flex-col justify-center min-h-[400px] md:min-h-[720px] rounded-[32px] md:rounded-none">
-                <p className="uppercase tracking-[0.4em] text-[#C5A059] font-black text-[10px] md:text-sm mb-4">Confidential Diagnostic</p>
-                <h1 className="text-4xl md:text-8xl font-serif font-black text-[#002147] mb-6 md:mb-10 leading-[1.1]">Worthy Retail<br/>X-Ray Profile</h1>
-                <p className="text-lg md:text-3xl italic text-slate-500">Prepared for: <span className="font-bold text-[#002147]">{userName.charAt(0).toUpperCase() + userName.slice(1)}</span></p>
+                <div className="flex-grow flex flex-col justify-center">
+                    <p className="uppercase tracking-[0.4em] text-[#C5A059] font-black text-[10px] md:text-sm mb-4">Confidential Diagnostic Report</p>
+                    <h1 className="text-4xl md:text-8xl font-serif font-black text-[#002147] mb-6 md:mb-10 leading-[1.1]">Worthy Retail<br/>X-Ray Profile</h1>
+                    <p className="text-lg md:text-3xl italic text-slate-500">Prepared for: <span className="font-bold text-[#002147]">{userName.charAt(0).toUpperCase() + userName.slice(1)}</span></p>
+                </div>
+                <ReportFooter page={1} />
             </div>
 
             {/* SLIDE 2: ANALYSIS */}
-            <div className="report-slide bg-[#FAF9F6] p-8 md:p-24 border-t-[14px] border-[#002147] shadow-2xl min-h-auto md:min-h-[720px] rounded-[32px] md:rounded-none">
+            <div className="report-slide bg-[#FAF9F6] p-8 md:p-24 border-t-[14px] border-[#002147] shadow-2xl min-h-auto md:min-h-[720px] rounded-[32px] md:rounded-none flex flex-col">
                 <h2 className="text-2xl md:text-4xl font-serif font-bold text-[#002147] mb-6 md:mb-12 border-b pb-8 flex justify-between items-center">Analysis <span className="text-[10px] font-black uppercase text-slate-300 tracking-widest">BFP Framework</span></h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-20 items-start">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-20 items-start flex-grow">
                     <div className="flex flex-col h-full">
                         <div className="flex items-center gap-4 mb-6 md:mb-10">
                             <div className="p-3 bg-white shadow-md rounded-xl text-[#002147] border">{results.icon}</div>
@@ -310,15 +320,16 @@ export default function App() {
                         <div className="flex items-center gap-3 font-bold text-[#002147] border-t pt-8 text-xs md:text-base"><Target className="text-[#C5A059]" size={20}/> Phase I Optimization</div>
                     </div>
                 </div>
+                <ReportFooter page={2} />
             </div>
 
             {/* SLIDE 3: ROADMAP */}
-            <div className="report-slide bg-[#FAF9F6] p-8 md:p-24 border-t-[14px] border-[#C5A059] shadow-2xl min-h-auto md:min-h-[720px] rounded-[32px] md:rounded-none">
+            <div className="report-slide bg-[#FAF9F6] p-8 md:p-24 border-t-[14px] border-[#C5A059] shadow-2xl min-h-auto md:min-h-[720px] rounded-[32px] md:rounded-none flex flex-col">
                 <div className="flex items-center gap-4 mb-10 border-b pb-8">
                   <div className="bg-[#002147] text-[#C5A059] p-4 rounded-full shadow-lg"><BookOpen size={32} /></div>
                   <h2 className="text-2xl md:text-4xl font-serif font-bold text-[#002147]">The Campus Roadmap</h2>
                 </div>
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 flex-grow">
                   <div className="lg:col-span-5 bg-white p-8 md:p-12 rounded-[48px] border shadow-xl text-center flex flex-col items-center justify-center">
                     <GraduationCap size={64} className="text-[#002147] mb-6" />
                     <p className="text-[10px] font-black uppercase text-slate-400 mb-3 tracking-widest">Priority Focus Pillar</p>
@@ -331,7 +342,7 @@ export default function App() {
                       <div key={idx} className="bg-white p-6 md:p-8 rounded-3xl border hover:border-[#C5A059] transition-all flex items-start gap-5 group shadow-sm">
                         <div className="bg-slate-50 text-slate-300 group-hover:bg-[#C5A059] group-hover:text-white p-4 rounded-2xl transition-all shadow-sm"><PlayCircle size={24} /></div>
                         <div>
-                          <h4 className="font-bold text-[#002147] text-lg md:text-xl">{mod.name}</h4>
+                          <h4 className="font-bold text-[#002147] text-lg md:text-xl tracking-tight">{mod.name}</h4>
                           <p className="text-sm md:text-base text-slate-500 mt-2 leading-relaxed">{mod.desc}</p>
                         </div>
                       </div>
@@ -339,6 +350,7 @@ export default function App() {
                     <button className="bg-[#002147] text-white px-10 py-5 rounded-full font-bold shadow-2xl flex items-center justify-center gap-3 active:scale-95 transition-all mt-4 group">Enroll in Masterclass <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" /></button>
                   </div>
                 </div>
+                <ReportFooter page={3} />
             </div>
         </div>
         <style>{`.report-slide { border-radius: 40px; } @media print { body { background: white !important; padding: 0 !important; } .print\\:hidden { display: none !important; } .report-slide { width: 1280px !important; height: 720px !important; border-radius: 0 !important; page-break-after: always !important; display: flex !important; flex-direction: column !important; padding: 80px !important; } @page { size: 1280px 720px; margin: 0; } }`}</style>
