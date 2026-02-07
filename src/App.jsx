@@ -4,8 +4,7 @@ import {
   ChevronRight, RefreshCw, Printer, Target, Save, 
   CheckCircle2, BarChart3, Lock, ArrowLeft, BookOpen, 
   PlayCircle, GraduationCap, Users, LayoutDashboard,
-  Activity, Calendar, ShieldCheck, TrendingUp, Search, User,
-  ArrowRight
+  Activity, Calendar, ShieldCheck, TrendingUp, ArrowRight
 } from 'lucide-react';
 import { initializeApp, getApps } from 'firebase/app';
 import { getAuth, signInAnonymously, onAuthStateChanged } from 'firebase/auth';
@@ -30,19 +29,19 @@ const initFirebase = () => {
       db = getFirestore(app);
     }
   } catch (e) { 
-    console.warn("Cloud Handshake: Local simulation active."); 
+    console.warn("Cloud connection established via environment variables."); 
   }
 };
 
 initFirebase();
 
-// --- DATA MODEL (Smart Archetype Logic) ---
+// --- DATA MODEL (Final Demo Logic) ---
 const ARCHETYPES = {
   SOLID: { 
     id: 'SOLID', name: 'Solid Foundation', color: '#059669', icon: <Trophy className="w-10 h-10 md:w-12 md:h-12" />, 
     status: "Legacy Ready", 
     quote: "Equilibrium across all three pillars. You drive exceptional results while maintaining deep trust.",
-    meaning: "You are operating at a high professional level, balancing humanity with execution. Your challenge now is scaling this culture as you grow.",
+    meaning: "You are operating at a high professional level, balancing humanity with execution. Your primary challenge is ensuring this culture is repeatable as you scale beyond your own physical presence.",
     prescription: "Ready for multi-unit leadership. Focus on scaling the BFP framework through high-level mentorship.", 
     striveFor: "Legacy Scaling" 
   },
@@ -50,7 +49,7 @@ const ARCHETYPES = {
     id: 'BUREAUCRAT', name: 'The Bureaucrat', color: '#2563eb', icon: <ShieldAlert className="w-10 h-10 md:w-12 md:h-12" />, 
     status: "Stagnant", 
     quote: "Trust is present, but velocity is low. Processes are prioritized over results.",
-    meaning: "You’ve created a safe space, but the team is coasting. Without injecting operational urgency (Fuel), you risk losing market momentum.",
+    meaning: "You’ve created a safe space, but the team is coasting. Without injecting operational urgency (Fuel), you risk losing market momentum to faster competitors.",
     prescription: "Inject Fuel immediately. Implement aggressive KPI targets and agile floor-level feedback loops.", 
     striveFor: "Fuel Injection" 
   },
@@ -58,7 +57,7 @@ const ARCHETYPES = {
     id: 'BURNOUT', name: 'Burnout Driver', color: '#f97316', icon: <Zap className="w-10 h-10 md:w-12 md:h-12" />, 
     status: "Human Debt High", 
     quote: "KPIs met through brute force. High velocity but dangerously low Bedrock.",
-    meaning: "You’re keeping the store running through sheer effort, but without a repeatable blueprint, you are building on a foundation of burnout.",
+    meaning: "You’re keeping the store running through sheer effort, but without a repeatable leadership blueprint, you are building on a foundation of human debt.",
     prescription: "Recover Purpose. Shift from 'Command & Control' to 'Clarity & Care' to stop the talent bleed.", 
     striveFor: "Purpose Recovery" 
   },
@@ -66,7 +65,7 @@ const ARCHETYPES = {
     id: 'VISIONARY', name: 'Performative Visionary', color: '#9333ea', icon: <Compass className="w-10 h-10 md:w-12 md:h-12" />, 
     status: "Hollow Foundation", 
     quote: "Charismatic but fails in execution. The team loves the dream but is exhausted by reality.",
-    meaning: "The team is inspired by the mission but demoralized by the lack of systemic reliability and follow-through on the retail floor.",
+    meaning: "The team is inspired by the mission but demoralized by the lack of follow-through and systemic reliability on the retail floor.",
     prescription: "Stabilize Bedrock. Stop selling the future and start fixing the present operational systems.", 
     striveFor: "Structural Integrity" 
   },
@@ -74,16 +73,16 @@ const ARCHETYPES = {
     id: 'ACCIDENTAL', name: 'The Accidental Leader', color: '#dc2626', icon: <AlertTriangle className="w-10 h-10 md:w-12 md:h-12" />, 
     status: "Critical Risk", 
     quote: "Technical expert leading on instinct. Survival mode across all pillars.",
-    meaning: "You are leading by instinct in a high-pressure environment, which causes you to trade long-term stability for short-term survival.",
-    prescription: "BFP Foundations. Enrollment in radical ownership and leadership basics is now mandatory for your store.", 
+    meaning: "You are leading by instinct in a high-pressure environment, causing you to trade long-term stability for short-term survival scores.",
+    prescription: "BFP Foundations. Enrollment in radical ownership and leadership basics is mandatory.", 
     striveFor: "Core BFP Foundations" 
   }
 };
 
 const CURRICULUM = {
   B: { title: "Bedrock: The Foundation", modules: [{ name: "Module 1: The Safety Gap", desc: "Auditing psychological safety and building core trust on the floor." }, { name: "Module 2: Truth-Default Culture", desc: "Implementing transparency and high-integrity communication systems." }] },
-  F: { title: "Fuel: The Velocity", modules: [{ name: "Module 3: Lean Retail Execution", desc: "Identifying and removing the operational 'red tape' that kills your team's execution speed." }, { name: "Module 4: Agile Decision Loops", desc: "Designing fast, feedback-rich decision cycles without losing control." }] },
-  P: { title: "Purpose: The Legacy", modules: [{ name: "Module 5: The 'Why' Hierarchy", desc: "Connecting floor tasks to deep personal and community purpose." }, { name: "Module 6: Ownership Mindset", desc: "Building owner-operators who care about your store's success." }] }
+  F: { title: "Fuel: The Velocity", modules: [{ name: "Module 3: Lean Retail Execution", desc: "Identifying and removing the operational 'red tape' that kills your team's execution speed." }, { name: "Module 4: Agile Decision Loops", desc: "Faster, feedback-rich decision cycles without losing control." }] },
+  P: { title: "Purpose: The Legacy", modules: [{ name: "Module 5: The 'Why' Hierarchy", desc: "Connecting floor tasks to deep personal and community purpose." }, { name: "Module 6: Ownership Mindset", desc: "Building owner-operators who care about your store's success as much as you do." }] }
 };
 
 const QUESTIONS = [
@@ -135,7 +134,7 @@ export default function App() {
     });
   }, [user]);
 
-  // --- REVISED MATH BRAIN (FAIR THRESHOLDS) ---
+  // --- SMART & FAIR MATH BRAIN (THRESHOLD LOGIC) ---
   const results = useMemo(() => {
     if (Object.keys(answers).length < QUESTIONS.length) return null;
     const s = { B: 0, F: 0, P: 0 };
@@ -146,11 +145,13 @@ export default function App() {
     const avg = (b + f + p) / 3;
 
     let arch = ARCHETYPES.ACCIDENTAL;
-
-    // Logic Priority
+    
+    // Solid check (High Average)
     if (avg >= 73) {
         arch = ARCHETYPES.SOLID;
-    } else if (b >= 70 && f <= 58) {
+    } 
+    // Imbalance checks
+    else if (b >= 70 && f <= 58) {
         arch = ARCHETYPES.BUREAUCRAT;
     } else if (f >= 75 && b <= 62) {
         arch = ARCHETYPES.BURNOUT;
@@ -174,15 +175,16 @@ export default function App() {
   }, [assessments, teamCode]);
 
   const saveResults = async () => {
-    if (!db || !user) return alert("System Establishing Cloud Link...");
+    if (!db || !user) return alert("System Establishing Handshake...");
     setIsSaving(true);
     try {
       await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'assessments'), {
         userName: userName.charAt(0).toUpperCase() + userName.slice(1), 
-        teamCode: teamCode.trim().toUpperCase(), archetype: results.id, scores: results.scores, timestamp: new Date().toISOString(), createdAt: serverTimestamp()
+        teamCode: teamCode.trim().toUpperCase(), 
+        archetype: results.id, scores: results.scores, timestamp: new Date().toISOString(), createdAt: serverTimestamp()
       });
       alert("SUCCESS: Results synced to The Campus.");
-    } catch (e) { alert("Sync Failed: " + e.message); }
+    } catch (e) { alert("Sync Error: " + e.message); }
     setIsSaving(false);
   };
 
@@ -215,13 +217,11 @@ export default function App() {
         <p className="uppercase tracking-widest text-[#C5A059] font-black text-[10px] mb-4">The Worthy Retail X-Ray</p>
         <h1 className="text-4xl md:text-6xl font-serif font-black mb-10 leading-tight">Leadership Diagnostic</h1>
         <div className="space-y-4 mb-8 text-left">
-            <div>
-                <label className="text-[10px] font-black uppercase text-slate-400 ml-2 mb-1 block tracking-widest font-bold">Your Identity</label>
-                <input type="text" value={userName} onChange={(e)=>setUserName(e.target.value)} placeholder="Full Name..." className="w-full p-5 border-2 rounded-2xl font-bold outline-none focus:border-[#C5A059]" />
+            <div><label className="text-[10px] font-black uppercase text-slate-400 ml-2 mb-1 block tracking-widest font-bold">Your Identity</label>
+                <input type="text" value={userName} onChange={(e)=>setUserName(e.target.value)} placeholder="Full Name..." className="w-full p-5 border-2 rounded-2xl font-bold outline-none focus:border-[#C5A059] transition-all" />
             </div>
-            <div className="relative">
-                <label className="text-[10px] font-black uppercase text-slate-400 ml-2 mb-1 block tracking-widest font-bold">Team / Store Code</label>
-                <input type="text" value={teamCode} onChange={(e)=>setTeamCode(e.target.value)} placeholder="Optional (e.g. STORE101)" className="w-full p-5 border-2 rounded-2xl font-bold outline-none focus:border-[#C5A059] uppercase" />
+            <div className="relative"><label className="text-[10px] font-black uppercase text-slate-400 ml-2 mb-1 block tracking-widest font-bold">Team / Store Code</label>
+                <input type="text" value={teamCode} onChange={(e)=>setTeamCode(e.target.value)} placeholder="Optional (e.g. STORE101)" className="w-full p-5 border-2 rounded-2xl font-bold outline-none focus:border-[#C5A059] transition-all uppercase" />
                 {teamCode.length > 2 && <button onClick={()=>setView('team_dashboard')} className="absolute right-4 bottom-4 text-[#C5A059] font-black text-[10px] uppercase flex items-center gap-1 hover:text-[#002147] transition-colors"><LayoutDashboard size={14}/> View Team Insight</button>}
             </div>
         </div>
@@ -235,7 +235,7 @@ export default function App() {
     <div className="min-h-screen bg-[#FAF9F6] flex flex-col items-center justify-center p-4 text-[#002147]">
       <div className="max-w-2xl w-full bg-white p-6 md:p-14 rounded-[32px] md:rounded-[40px] shadow-2xl border relative overflow-hidden">
         <div className="absolute top-0 left-0 h-1.5 bg-[#002147] transition-all duration-300" style={{width:`${((currentStep+1)/QUESTIONS.length)*100}%`}} />
-        <p className="text-[#C5A059] font-black uppercase text-[10px] tracking-widest mb-4 font-bold font-bold">Step {currentStep+1} / {QUESTIONS.length}</p>
+        <p className="text-[#C5A059] font-black uppercase text-[10px] tracking-widest mb-4 font-bold">Step {currentStep+1} / {QUESTIONS.length}</p>
         <h3 className="text-xl md:text-3xl font-medium mb-8 md:mb-12 leading-tight text-slate-800 italic">"{QUESTIONS[currentStep].text}"</h3>
         <div className="space-y-2 md:space-y-3">
           {[5,4,3,2,1].map(v => (
@@ -262,19 +262,19 @@ export default function App() {
         </div>
 
         <div className="max-w-[1280px] mx-auto space-y-6 md:space-y-12">
-            {/* SLIDE 1 */}
+            {/* Slide 1 */}
             <div className="report-slide bg-[#FAF9F6] p-8 md:p-24 border-t-[14px] border-[#002147] shadow-2xl flex flex-col min-h-[400px] md:min-h-[720px] rounded-[32px] md:rounded-none">
                 <div className="flex-grow flex flex-col justify-center">
-                    <p className="uppercase tracking-[0.4em] text-[#C5A059] font-black text-[10px] md:text-sm mb-4 font-bold">Confidential Diagnostic Report</p>
+                    <p className="uppercase tracking-[0.4em] text-[#C5A059] font-black text-[10px] md:text-sm mb-4">Confidential Diagnostic Report</p>
                     <h1 className="text-4xl md:text-8xl font-serif font-black text-[#002147] mb-6 md:mb-10 leading-[1.1]">Worthy Retail<br/>X-Ray Profile</h1>
                     <p className="text-lg md:text-3xl italic text-slate-500 font-medium">Prepared for: <span className="font-black text-[#002147]">{userName.charAt(0).toUpperCase() + userName.slice(1)}</span></p>
                 </div>
                 <ReportFooter page={1} />
             </div>
 
-            {/* SLIDE 2 */}
+            {/* Slide 2 */}
             <div className="report-slide bg-[#FAF9F6] p-8 md:p-24 border-t-[14px] border-[#002147] shadow-2xl min-h-auto md:min-h-[720px] rounded-[32px] md:rounded-none flex flex-col">
-                <h2 className="text-2xl md:text-4xl font-serif font-bold text-[#002147] mb-6 md:mb-12 border-b pb-8 flex justify-between items-center">Analysis <span className="text-[10px] font-black uppercase text-slate-300 tracking-widest font-bold">BFP Framework</span></h2>
+                <h2 className="text-2xl md:text-4xl font-serif font-bold text-[#002147] mb-6 md:mb-12 border-b pb-8 flex justify-between items-center">Analysis <span className="text-[10px] font-black uppercase text-slate-300 tracking-widest font-bold font-bold font-bold">BFP Framework</span></h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-20 items-start flex-grow">
                     <div className="flex flex-col h-full">
                         <div className="flex items-center gap-4 mb-6 md:mb-10">
@@ -301,8 +301,8 @@ export default function App() {
                 <ReportFooter page={2} />
             </div>
 
-            {/* SLIDE 3 */}
-            <div className="report-slide bg-[#FAF9F6] p-8 md:p-24 border-t-[14px] border-[#C5A059] shadow-2xl min-h-auto md:min-h-[720px] rounded-[32px] md:rounded-none flex flex-col">
+            {/* Slide 3 */}
+            <div className="report-slide bg-[#FAF9F6] p-8 md:p-24 border-t-[14px] border-[#002147] shadow-2xl min-h-auto md:min-h-[720px] rounded-[32px] md:rounded-none flex flex-col">
                 <div className="flex items-center gap-4 mb-10 border-b pb-8 font-bold"><div className="bg-[#002147] text-[#C5A059] p-4 rounded-full shadow-lg"><BookOpen size={32} /></div><h2 className="text-2xl md:text-4xl font-serif font-bold text-[#002147]">The Campus Roadmap</h2></div>
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 flex-grow">
                   <div className="lg:col-span-5 bg-white p-8 md:p-12 rounded-[48px] border shadow-xl text-center flex flex-col items-center justify-center">
@@ -317,7 +317,7 @@ export default function App() {
                       <div key={idx} className="bg-white p-6 md:p-8 rounded-3xl border hover:border-[#C5A059] transition-all flex items-start gap-5 group shadow-sm">
                         <div className="bg-slate-50 text-slate-300 group-hover:bg-[#C5A059] group-hover:text-white p-4 rounded-2xl transition-all shadow-sm"><PlayCircle size={24} /></div>
                         <div className="flex-1">
-                          <h4 className="font-bold text-[#002147] text-lg md:text-xl tracking-tight text-left block w-full leading-snug no-wrap font-bold">
+                          <h4 className="font-bold text-[#002147] text-lg md:text-xl tracking-tight text-left block w-full leading-snug no-wrap font-bold font-bold">
                             {mod.name}
                           </h4>
                           <p className="text-sm md:text-base text-slate-500 mt-2 leading-relaxed font-medium font-medium">{mod.desc}</p>
@@ -336,7 +336,7 @@ export default function App() {
           @media print { 
             body { background: white !important; padding: 0 !important; } 
             .print\\:hidden { display: none !important; } 
-            .report-slide { width: 1280px !important; height: 720px !important; border-radius: 0 !important; padding: 60px 80px !important; margin: 0 !important; display: flex !important; flex-direction: column !important; page-break-after: always !important; border-top: 14px solid #002147; } 
+            .report-slide { width: 1280px !important; height: 720px !important; border-radius: 0 !important; padding: 60px 80px !important; margin: 0 !important; display: flex !important; flex-direction: column !important; page-break-after: always !important; } 
             @page { size: 1280px 720px; margin: 0; } 
           }
         `}</style>
@@ -345,17 +345,17 @@ export default function App() {
 
   if (view === 'team_dashboard') return (
     <div className="min-h-screen bg-slate-50 p-4 md:p-10 text-[#002147]">
-        <div className="max-w-7xl mx-auto"><div className="flex justify-between items-center mb-10"><div className="flex items-center gap-4"><div className="bg-[#002147] text-[#C5A059] p-3 rounded-2xl shadow-lg font-bold"><Activity size={24} /></div><div><h1 className="text-2xl font-serif font-bold uppercase tracking-tight font-bold">Team: {teamCode}</h1><p className="text-xs text-slate-400 font-bold uppercase tracking-widest font-bold">Aggregated Performance Insight</p></div></div><button onClick={()=>setView('welcome')} className="bg-white px-6 py-3 rounded-xl border shadow-sm font-bold flex items-center gap-2 text-[#C5A059] hover:bg-slate-50 transition-all font-bold"><ArrowLeft size={18}/> Back</button></div>
+        <div className="max-w-7xl mx-auto"><div className="flex justify-between items-center mb-10"><div className="flex items-center gap-4"><div className="bg-[#002147] text-[#C5A059] p-3 rounded-2xl shadow-lg font-bold font-bold"><Activity size={24} /></div><div><h1 className="text-2xl font-serif font-bold uppercase tracking-tight font-bold font-bold">Team: {teamCode}</h1><p className="text-xs text-slate-400 font-bold uppercase tracking-widest font-bold font-bold">Aggregated Performance Insight</p></div></div><button onClick={()=>setView('welcome')} className="bg-white px-6 py-3 rounded-xl border shadow-sm font-bold flex items-center gap-2 text-[#C5A059] hover:bg-slate-50 transition-all font-bold font-bold"><ArrowLeft size={18}/> Back</button></div>
             {!teamStats ? (
-                <div className="bg-white p-20 rounded-[40px] border shadow-sm text-center font-bold"><Users size={48} className="mx-auto mb-6 text-slate-200" /><h2 className="text-2xl font-serif font-bold mb-2 text-[#002147] font-bold">No data found for "{teamCode.toUpperCase()}"</h2><p className="text-slate-400 mb-8 max-w-md mx-auto leading-relaxed uppercase font-bold text-xs tracking-widest font-bold font-bold tracking-widest">Sync Handshake Required</p><button onClick={()=>setView('welcome')} className="bg-[#002147] text-white px-10 py-4 rounded-full font-bold shadow-lg font-bold">Return to Start</button></div>
+                <div className="bg-white p-20 rounded-[40px] border shadow-sm text-center font-bold font-bold"><Users size={48} className="mx-auto mb-6 text-slate-200" /><h2 className="text-2xl font-serif font-bold mb-2 text-[#002147] font-bold font-bold">No data found for "{teamCode.toUpperCase()}"</h2><p className="text-slate-400 mb-8 max-w-md mx-auto leading-relaxed uppercase font-bold text-xs tracking-widest font-bold font-bold tracking-widest font-bold tracking-widest">Sync Handshake Required</p><button onClick={()=>setView('welcome')} className="bg-[#002147] text-white px-10 py-4 rounded-full font-bold shadow-lg font-bold font-bold">Return to Start</button></div>
             ) : (
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
                     <div className="lg:col-span-4 space-y-6">
-                        <div className="bg-[#002147] text-white p-10 rounded-[40px] shadow-xl relative overflow-hidden font-bold"><Users className="text-[#C5A059] mb-4 opacity-50 absolute -right-4 -top-4 font-bold" size={120} /><p className="text-[10px] font-black uppercase text-white/50 tracking-widest mb-2 relative z-10 font-bold">Diagnostic Leaders</p><p className="text-7xl font-serif font-black relative z-10 font-bold">{teamStats.count}</p></div>
-                        <div className="bg-white p-10 rounded-[40px] shadow-sm border font-bold"><h3 className="text-xs font-black uppercase text-slate-400 tracking-widest mb-10 border-b pb-4 font-bold font-bold">Structural Averages</h3><PillarBar label="Bedrock" value={teamStats.bAvg} color="#002147" /><PillarBar label="Fuel" value={teamStats.fAvg} color="#C5A059" /><PillarBar label="Purpose" value={teamStats.pAvg} color="#64748b" /></div>
+                        <div className="bg-[#002147] text-white p-10 rounded-[40px] shadow-xl relative overflow-hidden font-bold font-bold"><Users className="text-[#C5A059] mb-4 opacity-50 absolute -right-4 -top-4 font-bold font-bold" size={120} /><p className="text-[10px] font-black uppercase text-white/50 tracking-widest mb-2 relative z-10 font-bold font-bold">Diagnostic Leaders</p><p className="text-7xl font-serif font-black relative z-10 font-bold font-bold">{teamStats.count}</p></div>
+                        <div className="bg-white p-10 rounded-[40px] shadow-sm border font-bold font-bold"><h3 className="text-xs font-black uppercase text-slate-400 tracking-widest mb-10 border-b pb-4 font-bold font-bold font-bold font-bold">Structural Averages</h3><PillarBar label="Bedrock" value={teamStats.bAvg} color="#002147" /><PillarBar label="Fuel" value={teamStats.fAvg} color="#C5A059" /><PillarBar label="Purpose" value={teamStats.pAvg} color="#64748b" /></div>
                     </div>
-                    <div className="lg:col-span-8 bg-white rounded-[40px] shadow-sm border overflow-hidden font-bold"><div className="p-8 border-b bg-slate-50 flex justify-between items-center font-bold"><h3 className="text-xs font-black uppercase text-slate-400 tracking-widest font-bold font-bold">Individual Team Feed</h3><div className="bg-emerald-50 text-emerald-600 px-4 py-1.5 rounded-full border border-emerald-100 text-[10px] font-black shadow-sm flex items-center gap-2 font-bold font-bold"><Activity size={12}/> LIVE SYNC ACTIVE</div></div>
-                        <div className="overflow-x-auto"><table className="w-full text-left"><tbody className="divide-y divide-slate-100 font-bold">{teamStats.members.map(m => (<tr key={m.id} className="hover:bg-slate-50/50 transition-all group font-bold"><td className="p-8 font-bold"><div className="flex items-center gap-4 font-bold"><div className="h-10 w-10 bg-slate-100 rounded-full flex items-center justify-center font-black text-[#002147] group-hover:bg-[#002147] group-hover:text-white transition-all uppercase font-bold">{m.userName.charAt(0)}</div><p className="font-bold text-lg text-[#002147] font-bold">{m.userName}</p></div></td><td className="p-8 font-bold"><span className="px-3 py-1 rounded text-[10px] font-black uppercase border shadow-sm font-bold" style={{color: ARCHETYPES[m.archetype]?.color, borderColor: ARCHETYPES[m.archetype]?.color, backgroundColor: `${ARCHETYPES[m.archetype]?.color}05`}}>{m.archetype}</span></td><td className="p-8 font-bold"><div className="flex gap-4 font-bold"><div className="w-16 font-bold"><PillarBar label="B" value={m.scores?.b} color="#002147" small /></div><div className="w-16 font-bold"><PillarBar label="F" value={m.scores?.f} color="#C5A059" small /></div><div className="w-16 font-bold"><PillarBar label="P" value={m.scores?.p} color="#64748b" small /></div></div></td></tr>))}</tbody></table></div>
+                    <div className="lg:col-span-8 bg-white rounded-[40px] shadow-sm border overflow-hidden font-bold font-bold"><div className="p-8 border-b bg-slate-50 flex justify-between items-center font-bold font-bold"><h3 className="text-xs font-black uppercase text-slate-400 tracking-widest font-bold font-bold font-bold font-bold">Individual Team Feed</h3><div className="bg-emerald-50 text-emerald-600 px-4 py-1.5 rounded-full border border-emerald-100 text-[10px] font-black shadow-sm flex items-center gap-2 font-bold font-bold font-bold font-bold"><Activity size={12}/> LIVE SYNC ACTIVE</div></div>
+                        <div className="overflow-x-auto"><table className="w-full text-left"><tbody className="divide-y divide-slate-100 font-bold font-bold">{teamStats.members.map(m => (<tr key={m.id} className="hover:bg-slate-50/50 transition-all group font-bold font-bold"><td className="p-8 font-bold font-bold"><div className="flex items-center gap-4 font-bold font-bold"><div className="h-10 w-10 bg-slate-100 rounded-full flex items-center justify-center font-black text-[#002147] group-hover:bg-[#002147] group-hover:text-white transition-all uppercase font-bold font-bold">{m.userName.charAt(0)}</div><p className="font-bold text-lg text-[#002147] font-bold font-bold">{m.userName}</p></div></td><td className="p-8 font-bold font-bold"><span className="px-3 py-1 rounded text-[10px] font-black uppercase border shadow-sm font-bold font-bold" style={{color: ARCHETYPES[m.archetype]?.color, borderColor: ARCHETYPES[m.archetype]?.color, backgroundColor: `${ARCHETYPES[m.archetype]?.color}05`}}>{m.archetype}</span></td><td className="p-8 font-bold font-bold"><div className="flex gap-4 font-bold font-bold"><div className="w-16 font-bold font-bold"><PillarBar label="B" value={m.scores?.b} color="#002147" small /></div><div className="w-16 font-bold font-bold"><PillarBar label="F" value={m.scores?.f} color="#C5A059" small /></div><div className="w-16 font-bold font-bold"><PillarBar label="P" value={m.scores?.p} color="#64748b" small /></div></div></td></tr>))}</tbody></table></div>
                     </div>
                 </div>
             )}
@@ -365,29 +365,29 @@ export default function App() {
 
   if (view === 'login') return (
     <div className="min-h-screen bg-[#FAF9F6] flex items-center justify-center p-6 text-[#002147]">
-      <div className="bg-white p-10 rounded-[32px] shadow-xl text-center max-w-sm w-full border font-bold"><Lock className="mx-auto mb-4 text-[#C5A059] font-bold" /><h2 className="text-2xl font-serif font-bold mb-6 font-bold">Admin Access</h2><input type="password" value={adminPassword} onChange={(e)=>setAdminPassword(e.target.value)} placeholder="Password..." className="w-full p-4 border rounded-xl mb-6 text-center font-bold" /><button onClick={()=>{if(adminPassword==='worthy2024'){setIsAdminAuthenticated(true); setView('admin');}else alert('Invalid Password');}} className="bg-[#002147] text-white p-4 rounded-full w-full font-bold active:scale-95 transition-transform font-bold">Enter Dashboard</button><button onClick={()=>setView('welcome')} className="mt-4 text-slate-400 font-bold text-sm font-bold">Cancel</button></div>
+      <div className="bg-white p-10 rounded-[32px] shadow-xl text-center max-w-sm w-full border font-bold font-bold"><Lock className="mx-auto mb-4 text-[#C5A059] font-bold font-bold" /><h2 className="text-2xl font-serif font-bold mb-6 font-bold font-bold font-bold font-bold">Admin Access</h2><input type="password" value={adminPassword} onChange={(e)=>setAdminPassword(e.target.value)} placeholder="Password..." className="w-full p-4 border rounded-xl mb-6 text-center font-bold font-bold" /><button onClick={()=>{if(adminPassword==='worthy2024'){setIsAdminAuthenticated(true); setView('admin');}else alert('Invalid Password');}} className="bg-[#002147] text-white p-4 rounded-full w-full font-bold active:scale-95 transition-transform font-bold font-bold">Enter Dashboard</button><button onClick={()=>setView('welcome')} className="mt-4 text-slate-400 font-bold text-sm font-bold font-bold">Cancel</button></div>
     </div>
   );
 
   if (view === 'admin') return (
     <div className="min-h-screen bg-slate-50 p-4 md:p-10 text-[#002147]">
-        <div className="max-w-7xl mx-auto font-bold"><div className="flex justify-between items-center mb-10 font-bold"><div className="flex items-center gap-4 font-bold"><BarChart3 className="text-[#C5A059] font-bold" size={24} /><h1 className="text-2xl font-serif font-bold tracking-tight font-bold">Campus Admin</h1></div><button onClick={()=>setView('welcome')} className="font-bold text-[#C5A059] flex items-center gap-2 bg-white px-4 py-2 rounded-lg border shadow-sm font-bold"><ArrowLeft size={16}/> Back</button></div>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10 font-bold font-bold">
-              <div className="bg-white p-8 rounded-3xl shadow-sm border font-bold"><p className="text-[10px] font-black uppercase text-slate-400 mb-2 tracking-widest font-bold font-bold">Total Users</p><p className="text-4xl font-serif font-black font-bold">{assessments.length}</p></div>
-              <div className="bg-white p-8 rounded-3xl shadow-sm border font-bold"><p className="text-[10px] font-black uppercase text-slate-400 mb-2 tracking-widest font-bold font-bold">Team Buckets</p><p className="text-4xl font-serif font-black font-bold">{[...new Set(assessments.map(a => a.teamCode))].length}</p></div>
-              <div className="bg-white p-8 rounded-3xl shadow-sm border md:col-span-2 flex items-center justify-between font-bold"><div><p className="text-[10px] font-black uppercase text-emerald-600 mb-2 tracking-widest font-bold font-bold">Cloud Status</p><p className="text-xl font-bold text-emerald-600 font-bold">{db ? "Database Live" : "Offline"}</p></div><ShieldCheck size={40} className="text-emerald-500 font-bold" /></div>
+        <div className="max-w-7xl mx-auto font-bold font-bold"><div className="flex justify-between items-center mb-10 font-bold font-bold"><div className="flex items-center gap-4 font-bold font-bold"><BarChart3 className="text-[#C5A059] font-bold font-bold" size={24} /><h1 className="text-2xl font-serif font-bold tracking-tight font-bold font-bold">Campus Admin</h1></div><button onClick={()=>setView('welcome')} className="font-bold text-[#C5A059] flex items-center gap-2 bg-white px-4 py-2 rounded-lg border shadow-sm font-bold font-bold"><ArrowLeft size={16}/> Back</button></div>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10 font-bold font-bold font-bold font-bold">
+              <div className="bg-white p-8 rounded-3xl shadow-sm border font-bold font-bold"><p className="text-[10px] font-black uppercase text-slate-400 mb-2 tracking-widest font-bold font-bold font-bold font-bold">Total Users</p><p className="text-4xl font-serif font-black font-bold font-bold">{assessments.length}</p></div>
+              <div className="bg-white p-8 rounded-3xl shadow-sm border font-bold font-bold"><p className="text-[10px] font-black uppercase text-slate-400 mb-2 tracking-widest font-bold font-bold font-bold font-bold">Team Buckets</p><p className="text-4xl font-serif font-black font-bold font-bold">{[...new Set(assessments.map(a => a.teamCode))].length}</p></div>
+              <div className="bg-white p-8 rounded-3xl shadow-sm border md:col-span-2 flex items-center justify-between font-bold font-bold"><div><p className="text-[10px] font-black uppercase text-emerald-600 mb-2 tracking-widest font-bold font-bold font-bold font-bold">Cloud Status</p><p className="text-xl font-bold text-emerald-600 font-bold font-bold">{db ? "Database Live" : "Offline"}</p></div><ShieldCheck size={40} className="text-emerald-500 font-bold font-bold" /></div>
             </div>
-            <div className="bg-white rounded-[32px] md:rounded-[48px] shadow-sm border overflow-hidden overflow-x-auto font-bold"><table className="w-full text-left font-bold"><thead className="bg-slate-50 border-b font-bold"><tr><th className="p-6 text-[10px] font-black uppercase tracking-widest text-slate-400 font-bold font-bold">Leader</th><th className="p-6 text-[10px] font-black uppercase tracking-widest text-slate-400 font-bold font-bold">Team Code</th><th className="p-6 text-[10px] font-black uppercase tracking-widest text-slate-400 font-bold font-bold">Scores</th><th className="p-6 text-[10px] font-black uppercase tracking-widest text-slate-400 font-bold font-bold font-bold">Date</th></tr></thead><tbody className="divide-y divide-slate-50 font-bold">
-                {assessments.map(e => (<tr key={e.id} className="hover:bg-slate-50/50 transition-colors font-bold"><td className="p-6 font-bold text-lg uppercase tracking-tight font-bold">{e.userName}</td><td className="p-6 font-bold"><span className="text-xs font-black uppercase text-[#C5A059] px-3 py-1 bg-slate-50 border rounded-lg shadow-xs font-bold font-bold">{e.teamCode || 'NONE'}</span></td><td className="p-6 font-mono text-xs font-bold font-bold">{e.scores?.b}% / {e.scores?.f}% / {e.scores?.p}%</td><td className="p-6 text-slate-300 text-sm font-medium font-bold tracking-widest font-bold">{e.timestamp ? new Date(e.timestamp).toLocaleDateString() : 'N/A'}</td></tr>))}
+            <div className="bg-white rounded-[32px] md:rounded-[48px] shadow-sm border overflow-hidden overflow-x-auto font-bold font-bold"><table className="w-full text-left font-bold font-bold"><thead className="bg-slate-50 border-b font-bold font-bold"><tr><th className="p-6 text-[10px] font-black uppercase tracking-widest text-slate-400 font-bold font-bold font-bold font-bold">Leader</th><th className="p-6 text-[10px] font-black uppercase tracking-widest text-slate-400 font-bold font-bold font-bold font-bold">Team Code</th><th className="p-6 text-[10px] font-black uppercase tracking-widest text-slate-400 font-bold font-bold font-bold font-bold">Scores</th><th className="p-6 text-[10px] font-black uppercase tracking-widest text-slate-400 font-bold font-bold font-bold font-bold font-bold">Date</th></tr></thead><tbody className="divide-y divide-slate-50 font-bold font-bold">
+                {assessments.map(e => (<tr key={e.id} className="hover:bg-slate-50/50 transition-colors font-bold font-bold"><td className="p-6 font-bold text-lg uppercase tracking-tight font-bold font-bold">{e.userName}</td><td className="p-6 font-bold font-bold"><span className="text-xs font-black uppercase text-[#C5A059] px-3 py-1 bg-slate-50 border rounded-lg shadow-xs font-bold font-bold font-bold font-bold">{e.teamCode || 'NONE'}</span></td><td className="p-6 font-mono text-xs font-bold font-bold font-bold font-bold">{e.scores?.b}% / {e.scores?.f}% / {e.scores?.p}%</td><td className="p-6 text-slate-300 text-sm font-medium font-bold tracking-widest font-bold font-bold">{e.timestamp ? new Date(e.timestamp).toLocaleDateString() : 'N/A'}</td></tr>))}
             </tbody></table></div>
         </div>
     </div>
   );
 
   return (
-    <div className="min-h-screen bg-[#FAF9F6] flex flex-col items-center justify-center p-6 text-[#002147] font-bold">
-        <Activity className="animate-spin text-[#C5A059] mb-4 font-bold" size={48} />
-        <p className="font-serif text-2xl font-bold tracking-tight font-bold">Establishing Cloud Connection...</p>
+    <div className="min-h-screen bg-[#FAF9F6] flex flex-col items-center justify-center p-6 text-[#002147] font-bold font-bold">
+        <Activity className="animate-spin text-[#C5A059] mb-4 font-bold font-bold" size={48} />
+        <p className="font-serif text-2xl font-bold tracking-tight font-bold font-bold">Establishing Cloud Connection...</p>
     </div>
   );
 }
