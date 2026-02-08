@@ -8,46 +8,17 @@ import {
   ArrowRight, HeartPulse, UserCheck,
   Flame, Microscope, Building2, Store, AlertOctagon,
   FileSearch, ClipboardCheck, Scale, Gavel,
-  Fingerprint, EyeOff, UploadCloud
+  Fingerprint, EyeOff, UploadCloud, CheckCircle2,
+  Loader2
 } from 'lucide-react';
 import { initializeApp, getApps } from 'firebase/app';
 import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from 'firebase/auth';
 import { getFirestore, collection, addDoc, onSnapshot, serverTimestamp } from 'firebase/firestore';
 
-// --- CLOUD INITIALIZATION (REPAIRED HANDSHAKE) ---
+// --- CLOUD INITIALIZATION (BOARD-READY AUTO-HANDSHAKE) ---
 let db = null;
 let auth = null;
-
-// Standard environment variable checks for multi-platform compatibility
 const appId = typeof __app_id !== 'undefined' ? __app_id : 'worthy-retail-xray';
-
-const initFirebase = () => {
-  try {
-    // Check multiple possible locations for config to ensure Vercel/Canvas sync
-    const rawConfig = typeof __firebase_config !== 'undefined' ? __firebase_config : null;
-    
-    if (rawConfig) {
-      const config = typeof rawConfig === 'string' ? JSON.parse(rawConfig) : rawConfig;
-      const app = getApps().length === 0 ? initializeApp(config) : getApps()[0];
-      auth = getAuth(app);
-      db = getFirestore(app);
-
-      // Perform Rule 3 compliant authentication
-      const initAuth = async () => {
-        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-          await signInWithCustomToken(auth, __initial_auth_token);
-        } else {
-          await signInAnonymously(auth);
-        }
-      };
-      initAuth();
-    }
-  } catch (e) { 
-    console.error("Risk System Initialization Failure:", e);
-  }
-};
-
-initFirebase();
 
 // --- DATA MODEL: ENTERPRISE RISK & INTEGRITY ---
 
@@ -66,22 +37,23 @@ const ARCHETYPES = {
     status: "Enterprise Asset", riskLevel: "NEGLIGIBLE",
     quote: "Elite alignment of the BFP Backbone and THRIVE behavioral engine.",
     meaning: "Your BFP Backbone is secure. The THRIVE engine is firing autonomously—specifically excelling in 'Total Agency.' You represent the benchmark for global brand scaling.",
-    riskImplications: "Minimal material exposure. Succession planning is the primary focus; ready for multi-unit architecture.",
+    riskImplications: "Minimal material exposure. Successional readiness is the primary focus for multi-unit expansion.",
     striveFor: "Global Multi-Unit Architecture" 
   },
   SOLID: { 
     id: 'SOLID', name: 'Solid Foundation', color: '#10b981', icon: <UserCheck className="w-10 h-10"/>, 
     status: "Legacy Ready", riskLevel: "LOW",
     quote: "Strong structural integrity across all leadership priorities.",
-    meaning: "Consistent professional operator. Bedrock is secure. To reach 'Scaler' status, focus on 'Total Agency'—reducing the team's reliance on your tactical intervention.",
-    riskImplications: "Operational plateau. Slight risk of friction as ecosystem complexity grows.",
+    meaning: "Consistent professional operator. Bedrock is secure. To reach 'Scaler' status, focus on the 'Total Agency' lever—empowering your team to lead autonomously.",
+    riskImplications: "Operational plateau. Slight risk of friction as ecosystem complexity grows, particularly across multi-site oversight.",
     striveFor: "Autonomous Leadership" 
   },
   MAVERICK: { 
     id: 'MAVERICK', name: 'High-Performance Maverick', color: '#f59e0b', icon: <Gavel className="w-10 h-10"/>, 
     status: "High Liability Risk", riskLevel: "CRITICAL",
+    quadrant: "High P&L Contribution / High Behavioral Risk",
     quote: "Commercial results achieved through non-compliant shortcut behaviors.",
-    meaning: "A commercial win but a statutory nightmare. You hit sales targets by fracturing Bedrock (Compliance). This represents a critical litigation risk (EEOC/OSHA).",
+    meaning: "A commercial win but a statutory nightmare. You hit targets by fracturing Bedrock. In the US market, this represents a critical litigation risk (EEOC/OSHA).",
     riskImplications: "Material litigation, regulatory penalties, and long-term brand erosion.",
     protocol: "Monitor: Compliance KPIs. Boundary: HR standards. Remediate: Track 1, Module 1.",
     striveFor: "Regulated Velocity" 
@@ -90,7 +62,7 @@ const ARCHETYPES = {
     id: 'BUREAUCRAT', name: 'Compliant Bureaucrat', color: '#2563eb', icon: <ShieldAlert className="w-10 h-10"/>, 
     status: "Operational Drag", riskLevel: "MEDIUM",
     quote: "High Bedrock integrity but critically low operational velocity.",
-    meaning: "Bedrock is secure, but Fuel is missing. The unit is bogged down in red tape. You are safe, but losing market share to faster competitors.",
+    meaning: "Bedrock is secure, but Fuel is absent. The unit is bogged down in red tape. Your THRIVE engine lacks 'Effectiveness.' You are safe, but losing market share.",
     riskImplications: "Market share loss and uncompetitive labor efficiency ratios.",
     striveFor: "System Decoupling" 
   },
@@ -98,24 +70,24 @@ const ARCHETYPES = {
     id: 'BURNOUT', name: 'Burnout Driver', color: '#ef4444', icon: <Flame className="w-10 h-10"/>, 
     status: "Human Debt High", riskLevel: "HIGH",
     quote: "KPIs achieved through 'Human Debt' at the expense of health.",
-    meaning: "Velocity achieved through brute force. You are destroying your team's THRIVE 'Health' markers. This leads to a collapse of Bedrock and high attrition.",
-    riskImplications: "Mass voluntary turnover, high recruitment cost, and potential workers comp claims.",
+    meaning: "Velocity achieved through brute force. You are destroying team health markers. This leads to a collapse of Bedrock and massive turnover costs.",
+    riskImplications: "Mass voluntary turnover and high recruitment costs.",
     striveFor: "Capacity Recovery" 
   },
   VISIONARY: { 
     id: 'VISIONARY', name: 'Performative Visionary', color: '#8b5cf6', icon: <Compass className="w-10 h-10"/>, 
     status: "Hollow Backbone", riskLevel: "MEDIUM/HIGH",
     quote: "High purpose alignment but failing in execution and systems.",
-    meaning: "Purpose is high, but the Backbone is fractured at Bedrock and Fuel. Leadership is charisma-led rather than system-led.",
-    riskImplications: "Inventory shrink, operational inconsistency, and loss of regional confidence.",
+    meaning: "Leadership is charisma-led rather than system-led. The Backbone is fractured at Bedrock and Fuel. The team is inspired but exhausted.",
+    riskImplications: "Inventory shrink and loss of operational consistency.",
     striveFor: "Structural Hardening" 
   },
   HUMANIST: { 
     id: 'HUMANIST', name: 'Cultural Humanist', color: '#ec4899', icon: <HeartPulse className="w-10 h-10"/>, 
     status: "Low Execution", riskLevel: "MEDIUM",
     quote: "Strong human connection but missing the operational edge.",
-    meaning: "High trust but zero accountability. You have created a family, not a high-performance retail unit. Margins are leaking.",
-    riskImplications: "Margin erosion, consistent KPI failure, and high cost-per-transaction.",
+    meaning: "High trust but zero accountability. You have created a family, not a performance ecosystem. Margin erosion is inevitable.",
+    riskImplications: "Margin erosion and consistent KPI failure.",
     striveFor: "Accountable Performance" 
   },
   ACCIDENTAL: { 
@@ -123,7 +95,7 @@ const ARCHETYPES = {
     status: "Total Risk", riskLevel: "CRITICAL",
     quote: "Technical expert managing on survival instinct alone.",
     meaning: "Complete BFP Backbone fracture. Leading on instinct rather than infrastructure. Total liability for any scalable ecosystem.",
-    riskImplications: "Total unit failure, legal non-compliance, and immediate talent flight.",
+    riskImplications: "Total unit failure and legal non-compliance.",
     striveFor: "Core Integrity Foundations" 
   }
 };
@@ -137,7 +109,7 @@ const CURRICULUM = {
 const PROGRAMME = {
   frontLine: {
     B: [{ name: "Remediation Path", title: "Track 1, Module 1: Bulletproof Shift", desc: "Hard-coding compliance, safety (OSHA), and health standards into daily floor rhythms." }],
-    F: [{ name: "Performance Sprint", title: "Track 1, Module 2: Running the Numbers", desc: "Hard-wiring the P&L of the floor: conversion, labor spend, and margin maintenance." }],
+    F: [{ name: "Performance Sprint", title: "Track 1, Module 2: Running the Numbers", desc: "Hard-wiring the P&L: conversion, labor spend, and margin maintenance." }],
     P: [{ name: "Legacy Path", title: "Track 1, Module 3: Coaching & Agency", desc: "Activating 'Total Agency' to reduce management overhead and increase retention." }]
   },
   multiUnit: {
@@ -149,14 +121,14 @@ const PROGRAMME = {
 
 const QUESTIONS = [
   { id: 1, pillar: 'B', text: "My team feels safe admitting mistakes to me without fear of retribution." },
-  { id: 2, pillar: 'B', text: "I default to transparency and radical honesty even during peak holiday pressure." },
+  { id: 2, pillar: 'B', text: "I default to transparency and radical honesty even during peak pressure." },
   { id: 3, pillar: 'B', text: "Workplace safety and compliance protocols (OSHA/EEOC) are never bypassed for speed." },
   { id: 4, pillar: 'B', text: "Conflict within the team is resolved through direct, values-led, respectful dialogue." },
   { id: 5, pillar: 'B', text: "Diversity of thought and neurodiversity are actively welcomed in our decisions." },
   { id: 6, pillar: 'B', text: "I have a clear system for auditing 'Psychological Safety' on the retail floor." },
   { id: 7, pillar: 'B', text: "The team knows I consistently 'have their back' when facing external pressure." },
   { id: 8, pillar: 'B', text: "We have a 'Truth-Default' culture where bad news travels faster than good news." },
-  { id: 9, pillar: 'B', text: "Mental and physical health are treated as a shared leadership duty, not just policy." },
+  { id: 9, pillar: 'B', text: "Mental and physical health are treated as a shared leadership duty." },
   { id: 10, pillar: 'F', text: "We hit KPIs without relying on 'Brute Force' or constant intervention." },
   { id: 11, pillar: 'F', text: "Our operational systems accelerate speed rather than acting as red tape." },
   { id: 12, pillar: 'F', text: "I have data-driven systems to measure the team's execution velocity." },
@@ -165,9 +137,9 @@ const QUESTIONS = [
   { id: 15, pillar: 'F', text: "We can pivot floor strategy or layout within 24 hours based on market data." },
   { id: 16, pillar: 'F', text: "Decision loops are fast, feedback-rich, and clearly understood by the team." },
   { id: 17, pillar: 'F', text: "I spend less than 20% of my shift 'firefighting' operational glitches." },
-  { id: 18, pillar: 'F', text: "The team shows high resilience and discipline during seasonal peak traffic." },
+  { id: 18, pillar: 'F', text: "The team shows high resilience and discipline during seasonal peaks." },
   { id: 19, pillar: 'P', text: "Every team member can articulate our unit's 'Why' beyond just sales targets." },
-  { id: 20, pillar: 'P', text: "The team treats this ecosystem as a legacy they are building, not just a paycheck." },
+  { id: 20, pillar: 'P', text: "The team treats this ecosystem as a legacy they are building." },
   { id: 21, pillar: 'P', text: "Personal growth and career legacy are discussed as often as daily targets." },
   { id: 22, pillar: 'P', text: "The team understands the community and social impact of our brand presence." },
   { id: 23, pillar: 'P', text: "We share a unified vision of what 'Winning' looks like for the next 12 months." },
@@ -185,24 +157,34 @@ export default function App() {
   const [user, setUser] = useState(null);
   const [userName, setUserName] = useState("");
   const [teamCode, setTeamCode] = useState("");
-  const [isSaving, setIsSaving] = useState(false);
-  const [assessments, setAssessments] = useState([]);
+  const [syncStatus, setSyncStatus] = useState('idle'); // idle, syncing, success, error
   const [integritySigned, setIntegritySigned] = useState(false);
 
+  // --- ONE-TIME FIREBASE INIT ---
   useEffect(() => {
-    if (auth) {
-      const unsub = onAuthStateChanged(auth, setUser);
-      return () => unsub();
+    const rawConfig = typeof __firebase_config !== 'undefined' ? __firebase_config : null;
+    if (rawConfig) {
+      try {
+        const config = typeof rawConfig === 'string' ? JSON.parse(rawConfig) : rawConfig;
+        const app = getApps().length === 0 ? initializeApp(config) : getApps()[0];
+        auth = getAuth(app);
+        db = getFirestore(app);
+
+        const initAuth = async () => {
+          if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+            await signInWithCustomToken(auth, __initial_auth_token);
+          } else {
+            await signInAnonymously(auth);
+          }
+        };
+        initAuth();
+        const unsub = onAuthStateChanged(auth, setUser);
+        return () => unsub();
+      } catch (err) {
+        console.error("Firebase Handshake Error:", err);
+      }
     }
   }, []);
-
-  useEffect(() => {
-    if (!db || !user) return;
-    const q = collection(db, 'artifacts', appId, 'public', 'data', 'assessments');
-    return onSnapshot(q, (s) => {
-      setAssessments(s.docs.map(doc => ({ id: doc.id, ...doc.data() })).sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp)));
-    }, (e) => console.error("Sync Stream Error:", e));
-  }, [user]);
 
   // --- RECALIBRATED ARCHETYPE ENGINE ---
   const results = useMemo(() => {
@@ -214,21 +196,21 @@ export default function App() {
     const b = Math.round((s.B/45)*100), f = Math.round((s.F/45)*100), p = Math.round((s.P/45)*100);
     const avg = (b + f + p) / 3;
 
-    // Reliability Check (Anti-Cheat)
+    // Reliability Check
     const fives = Object.values(answers).filter(v => v === 5).length;
     const reliability = fives > 23 ? 45 : 94; 
 
     let arch = ARCHETYPES.ACCIDENTAL;
     
-    // Logic ladder prioritizing relative imbalances and ranges
+    // VARIANCE-LEAD LOGIC LADDER
     if (avg >= 85) arch = ARCHETYPES.SCALER;
-    else if (f >= 78 && b <= 62) arch = ARCHETYPES.MAVERICK; 
-    else if (f >= 78 && p <= 62) arch = ARCHETYPES.BURNOUT;  
+    else if (f >= 78 && b <= 68) arch = ARCHETYPES.MAVERICK; 
+    else if (f >= 78 && p <= 68) arch = ARCHETYPES.BURNOUT;  
     else if (avg >= 72) arch = ARCHETYPES.SOLID;            
-    else if (b >= 75 && f <= 60) arch = ARCHETYPES.BUREAUCRAT; 
-    else if (p >= 75 && f <= 60) arch = ARCHETYPES.VISIONARY;  
-    else if (b >= 75 && p <= 68) arch = ARCHETYPES.HUMANIST;   
-    else if (avg >= 60) arch = ARCHETYPES.SOLID; // Mid-range baseline
+    else if (b >= 75 && f <= 65) arch = ARCHETYPES.BUREAUCRAT; 
+    else if (p >= 75 && f <= 65) arch = ARCHETYPES.VISIONARY;  
+    else if (b >= 75 && p <= 72) arch = ARCHETYPES.HUMANIST;   
+    else if (avg >= 58) arch = ARCHETYPES.SOLID; 
     else arch = ARCHETYPES.ACCIDENTAL;
 
     const lowest = [{id: 'B', val: b}, {id: 'F', val: f}, {id: 'P', val: p}].reduce((prev, curr) => (prev.val < curr.val) ? prev : curr);
@@ -236,41 +218,28 @@ export default function App() {
     return { ...arch, scores: { b, f, p }, lowestPillar: lowest.id, reliability };
   }, [answers]);
 
-  // --- TRANSITION GUARD ---
+  // --- AUTO-SUBMIT HOOK (BOARD-GRADE RELIABILITY) ---
   useEffect(() => {
-    if (Object.keys(answers).length === QUESTIONS.length && view === 'quiz') {
-      const timer = setTimeout(() => setView('results'), 400);
-      return () => clearTimeout(timer);
-    }
-  }, [answers, view]);
-
-  const saveResults = async () => {
-    if (!db) {
-        alert("Establishing secure connection to Enterprise Hub... Please try again in 5 seconds.");
-        initFirebase();
-        return;
-    }
-    if (!results) {
-        alert("Calculated results not found. Audit cycle incomplete.");
-        return;
-    }
+    const syncData = async () => {
+      if (results && user && db && syncStatus === 'idle') {
+        setSyncStatus('syncing');
+        try {
+          await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'assessments'), {
+            userName, teamCode: teamCode.toUpperCase() || "UNASSIGNED", scope, 
+            archetype: results.id, scores: results.scores, reliability: results.reliability, 
+            timestamp: new Date().toISOString(), createdAt: serverTimestamp(),
+            userId: user.uid
+          });
+          setSyncStatus('success');
+        } catch (e) {
+          console.error("Auto-sync failure:", e);
+          setSyncStatus('error');
+        }
+      }
+    };
     
-    setIsSaving(true);
-    try {
-      if (!auth.currentUser) await signInAnonymously(auth);
-      
-      await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'assessments'), {
-        userName, teamCode: teamCode.toUpperCase() || "NONE", scope, 
-        archetype: results.id, scores: results.scores, reliability: results.reliability, 
-        timestamp: new Date().toISOString(), createdAt: serverTimestamp()
-      });
-      alert("SUCCESS: Diagnostic transmitted to Enterprise Hub.");
-    } catch (e) { 
-      console.error(e);
-      alert(`Handshake Failure: ${e.message}. Please check your connection.`); 
-    }
-    setIsSaving(false);
-  };
+    if (view === 'results') syncData();
+  }, [view, results, user, db, syncStatus, userName, teamCode, scope]);
 
   const PillarBar = ({ label, value, color, small = false }) => (
     <div className={`w-full ${small ? 'mb-2' : 'mb-6'}`}>
@@ -296,15 +265,15 @@ export default function App() {
   if (view === 'welcome') return (
     <div className="min-h-screen bg-[#FAF9F6] flex flex-col items-center justify-center p-4 text-[#002147]">
       <div className="max-w-xl w-full bg-white p-8 md:p-16 rounded-[40px] shadow-2xl border-t-[12px] border-[#002147] text-center relative">
-        <div className="absolute top-4 right-8 text-[8px] font-black opacity-20 uppercase tracking-widest">v2.7 Master-Handshake</div>
+        <div className="absolute top-4 right-8 text-[8px] font-black opacity-20 uppercase tracking-widest">v2.9 Board-Master</div>
         <p className="uppercase tracking-widest text-[#C5A059] font-black text-[10px] mb-4">Enterprise Human-Risk Management</p>
-        <h1 className="text-4xl md:text-6xl font-serif font-black mb-8 leading-tight text-slate-900">Risk X-Ray</h1>
+        <h1 className="text-4xl md:text-6xl font-serif font-black mb-8 leading-tight">Human Risk Audit</h1>
         <div className="space-y-6 text-left mb-10">
             <div className="bg-slate-900 p-6 rounded-3xl text-white">
                 <p className="text-[10px] font-black uppercase text-[#C5A059] mb-2 flex items-center gap-2"><Fingerprint size={14}/> Forensic Integrity Protocol</p>
                 <p className="text-xs font-bold leading-relaxed opacity-80 mb-4">Accurate reporting is essential for regional compliance mapping. Response bias is monitored.</p>
                 <label className="flex items-center gap-3 cursor-pointer group">
-                    <input type="checkbox" checked={integritySigned} onChange={(e)=>setIntegritySigned(e.target.checked)} className="w-5 h-5 accent-[#C5A059]"/>
+                    <input type="checkbox" checked={integritySigned} onChange={(e)=>setIntegritySigned(e.target.checked)} className="w-5 h-5 accent-[#C5A059] rounded"/>
                     <span className="text-[10px] font-black uppercase group-hover:text-[#C5A059] transition-colors">I declare these inputs are factually accurate.</span>
                 </label>
             </div>
@@ -316,9 +285,9 @@ export default function App() {
                 </div>
             </div>
             <input type="text" value={userName} onChange={(e)=>setUserName(e.target.value)} placeholder="Leader Full Name..." className="w-full p-5 border-2 rounded-2xl font-bold outline-none focus:border-[#C5A059]" />
-            <input type="text" value={teamCode} onChange={(e)=>setTeamCode(e.target.value)} placeholder="Region / Banner ID" className="w-full p-5 border-2 rounded-2xl font-bold outline-none focus:border-[#C5A059] uppercase" />
+            <input type="text" value={teamCode} onChange={(e)=>setTeamCode(e.target.value)} placeholder="Region / Hub ID" className="w-full p-5 border-2 rounded-2xl font-bold outline-none focus:border-[#C5A059] uppercase" />
         </div>
-        <button disabled={!userName || !integritySigned} onClick={()=>setView('quiz')} className="w-full bg-[#002147] text-white py-6 rounded-full font-black text-xl active:scale-95 transition-all shadow-xl hover:bg-[#C5A059] disabled:opacity-30">Initialize Forensic Audit</button>
+        <button disabled={!userName || !integritySigned} onClick={()=>setView('quiz')} className="w-full bg-[#002147] text-white py-6 rounded-full font-black text-xl active:scale-95 transition-all shadow-xl hover:bg-[#C5A059] disabled:opacity-30">Execute Forensic Audit</button>
       </div>
       <button onClick={()=>setView('team_dashboard')} className="mt-8 text-slate-300 text-[10px] font-black uppercase tracking-widest hover:text-[#002147] transition-all"><LayoutDashboard className="inline mr-2" size={14}/> Access Analytics Hub</button>
     </div>
@@ -333,7 +302,13 @@ export default function App() {
         <div className="grid grid-cols-1 gap-3">
           {[5,4,3,2,1].map(v => (
             <button key={v} onClick={()=>{
-              setAnswers(prev => ({...prev, [QUESTIONS[currentStep].id]:v}));
+              setAnswers(prev => {
+                const updated = {...prev, [QUESTIONS[currentStep].id]:v};
+                if(Object.keys(updated).length === QUESTIONS.length) {
+                    setTimeout(() => setView('results'), 400);
+                }
+                return updated;
+              });
               if(currentStep < QUESTIONS.length-1) setCurrentStep(currentStep+1);
             }} className="w-full text-left p-5 rounded-2xl border-2 border-slate-50 hover:border-[#C5A059] font-bold text-slate-600 active:bg-slate-50 transition-all flex justify-between items-center group">
               <span>{v===5?'Strongly Agree':v===1?'Strongly Disagree':v===4?'Agree':v===2?'Disagree':'Neutral'}</span>
@@ -348,12 +323,12 @@ export default function App() {
   if (view === 'results' && results) return (
     <div className="min-h-screen bg-[#cbd5e1] py-12 px-6 overflow-x-hidden">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center mb-10 gap-4 print:hidden">
-            <div className="flex gap-2 w-full md:w-auto">
-                <button onClick={()=>window.print()} className="flex-1 md:flex-none bg-[#002147] text-white px-8 py-4 rounded-full font-black flex items-center justify-center gap-2 shadow-xl hover:scale-105 transition-transform"><Printer size={18}/> Export PDF Report</button>
-                <button onClick={saveResults} disabled={isSaving} className={`flex-1 md:flex-none px-8 py-4 rounded-full font-black shadow-xl flex items-center justify-center gap-2 ${isSaving ? 'bg-slate-400 cursor-not-allowed' : 'bg-[#C5A059] text-white hover:bg-[#b88d40]'}`}>
-                    {isSaving ? <Activity className="animate-spin" size={18}/> : <UploadCloud size={18}/>}
-                    {isSaving ? 'Syncing...' : 'Submit to Board'}
-                </button>
+            <div className="flex gap-4 w-full md:w-auto">
+                <button onClick={()=>window.print()} className="flex-1 md:flex-none bg-[#002147] text-white px-8 py-4 rounded-full font-black flex items-center justify-center gap-2 shadow-xl hover:scale-105 transition-transform font-bold tracking-tight"><Printer size={18}/> Export Diagnostic PDF</button>
+                <div className={`flex-1 md:flex-none px-6 py-4 rounded-full font-black flex items-center justify-center gap-2 border-2 transition-all ${syncStatus === 'success' ? 'bg-emerald-50 border-emerald-500 text-emerald-600' : syncStatus === 'error' ? 'bg-red-50 border-red-500 text-red-600' : 'bg-white border-slate-200 text-slate-400'}`}>
+                    {syncStatus === 'syncing' ? <Loader2 className="animate-spin" size={18}/> : syncStatus === 'success' ? <CheckCircle2 size={18}/> : <Activity size={18}/>}
+                    {syncStatus === 'syncing' ? 'Analyzing...' : syncStatus === 'success' ? 'Hub Synchronized' : syncStatus === 'error' ? 'Sync Error' : 'Transmitting...'}
+                </div>
             </div>
             <button onClick={()=>window.location.reload()} className="text-[#002147] font-black uppercase text-[10px] tracking-widest hover:underline transition-all font-bold"><RefreshCw className="inline mr-2" size={14}/> Restart Audit</button>
         </div>
@@ -362,7 +337,7 @@ export default function App() {
             {/* Page 1: Cover */}
             <div className="report-slide bg-[#FAF9F6] p-8 md:p-24 border-t-[14px] border-[#002147] shadow-2xl flex flex-col min-h-[720px] rounded-[40px] print:rounded-none">
                 <div className="flex-grow flex flex-col justify-center">
-                    <p className="uppercase tracking-[0.4em] text-[#C5A059] font-black text-[10px] md:text-sm mb-4 font-bold">Confidential Human-Risk Audit</p>
+                    <p className="uppercase tracking-[0.4em] text-[#C5A059] font-black text-[10px] md:text-sm mb-4 font-bold">Confidential Human-Risk Report</p>
                     <h1 className="text-4xl md:text-8xl font-serif font-black text-[#002147] mb-6 md:mb-10 leading-[1.1]">Leadership Forensic<br/>Audit Profile</h1>
                     <div className="flex items-center gap-6 mt-4">
                         <div className="p-4 bg-white shadow-xl rounded-2xl border-2 border-slate-100 min-w-[200px]">
@@ -394,7 +369,7 @@ export default function App() {
                     <div>
                         <div className="flex items-center gap-6 mb-10">
                             <div className="p-4 bg-white shadow-xl rounded-2xl text-[#002147] border-2 border-slate-100 scale-125 origin-left">
-                                {React.cloneElement(ARCHETYPES[results.id].icon, {size: 40, className: "w-10 h-10"})}
+                                {React.cloneElement(results.icon, {size: 40, className: "w-10 h-10"})}
                             </div>
                             <div>
                                 <p className="text-[10px] font-black uppercase text-[#C5A059] tracking-widest mb-1 font-bold">Operating Archetype</p>
@@ -403,7 +378,7 @@ export default function App() {
                         </div>
                         <p className="text-base md:text-2xl text-slate-600 italic leading-relaxed font-medium mb-10">"{results.quote}"</p>
                         <div className="bg-slate-50 p-8 rounded-3xl border border-slate-100 relative">
-                             <div className="absolute top-4 right-4 px-3 py-1 bg-white rounded-full border text-[10px] font-black uppercase" style={{color: results.riskLevel === 'CRITICAL' ? '#dc2626' : '#64748b'}}>
+                             <div className="absolute top-4 right-4 px-3 py-1 bg-white rounded-full border text-[10px] font-black uppercase font-black" style={{color: results.riskLevel === 'CRITICAL' ? '#dc2626' : '#64748b'}}>
                                 <AlertOctagon size={12} className="inline mr-1"/> Liability: {results.riskLevel}
                              </div>
                              <p className="text-[10px] font-black uppercase text-[#C5A059] tracking-widest mb-3 font-bold underline text-[#C5A059]">The THRIVE Engine Insight</p>
@@ -435,7 +410,7 @@ export default function App() {
             </div>
 
             {/* Page 3: Roadmap */}
-            <div className="report-slide bg-[#FAF9F6] p-8 md:p-24 border-t-[14px] border-[#002147] shadow-2xl min-h-[720px] flex flex-col rounded-[40px] print:rounded-none">
+            <div className="report-slide bg-[#FAF9F6] p-8 md:p-24 border-t-[14px] border-[#C5A059] shadow-2xl min-h-[720px] flex flex-col rounded-[40px] print:rounded-none">
                 <div className="flex items-center gap-4 mb-10 border-b pb-8 font-bold"><div className="bg-[#002147] text-[#C5A059] p-4 rounded-full shadow-lg"><ClipboardCheck size={32} /></div><h2 className="text-2xl md:text-4xl font-serif font-bold text-[#002147]">Leadership Integrity Remediation</h2></div>
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 flex-grow">
                   <div className="lg:col-span-5 bg-white p-8 md:p-12 rounded-[48px] border shadow-xl text-center flex flex-col items-center justify-center">
@@ -458,8 +433,11 @@ export default function App() {
                     ))}
                     <div className="mt-4 p-8 bg-slate-900 rounded-[32px] text-white border-2 border-slate-800 shadow-2xl relative overflow-hidden">
                          <div className="absolute top-0 right-0 p-6 opacity-10"><ShieldCheck size={100}/></div>
-                         <p className="text-[10px] font-black uppercase text-[#C5A059] tracking-widest mb-2 relative z-10">Integrity Commitment</p>
-                         <button className="w-full bg-[#C5A059] text-white px-10 py-5 rounded-2xl font-black mt-8 shadow-2xl flex items-center justify-center gap-4 active:scale-95 transition-all uppercase tracking-widest text-sm relative z-10">Activate Remediation Path <ArrowRight size={20}/></button>
+                         <p className="text-[10px] font-black uppercase text-[#C5A059] tracking-widest mb-2 relative z-10 font-bold">Integrity Commitment</p>
+                         <p className="text-[10px] text-slate-400 mb-4 italic leading-relaxed">Leader acknowledges remediation track and commits to 90-day review.</p>
+                         <div className="w-full bg-[#C5A059] text-white px-10 py-5 rounded-2xl font-black shadow-2xl flex items-center justify-center gap-4 active:scale-95 transition-all uppercase tracking-widest text-sm relative z-10">
+                            Remediation Path Activated <ArrowRight size={20}/>
+                         </div>
                     </div>
                   </div>
                 </div>
@@ -475,32 +453,6 @@ export default function App() {
             @page { size: 1280px 720px; margin: 0; } 
           }
         `}</style>
-    </div>
-  );
-
-  if (view === 'team_dashboard') return (
-    <div className="min-h-screen bg-slate-50 p-4 md:p-10 text-[#002147]">
-        <div className="max-w-7xl mx-auto"><div className="flex justify-between items-center mb-10"><div className="flex items-center gap-4"><div className="bg-[#002147] text-[#C5A059] p-3 rounded-2xl shadow-lg font-bold"><Activity size={24} /></div><div><h1 className="text-2xl font-serif font-bold uppercase tracking-tight">Enterprise Integrity Hub: {teamCode}</h1><p className="text-xs text-slate-400 font-bold uppercase tracking-widest">Global Human-Risk Heat Map</p></div></div>
-            <button onClick={()=>setView('welcome')} className="bg-white px-6 py-3 rounded-xl border shadow-sm font-bold flex items-center gap-2 text-[#C5A059] hover:bg-slate-50 transition-all font-bold"><ArrowLeft size={18}/> Exit Hub</button>
-        </div>
-            {!assessments.length ? (
-                <div className="bg-white p-20 rounded-[40px] border shadow-sm text-center font-bold"><Users size={48} className="mx-auto mb-6 text-slate-200" /><h2 className="text-2xl font-serif font-bold mb-2 text-[#002147]">No active audit data found</h2><p className="text-slate-400 mb-8 max-w-md mx-auto leading-relaxed uppercase font-bold text-xs tracking-widest">Sync Handshake Required</p><button onClick={()=>setView('welcome')} className="bg-[#002147] text-white px-10 py-4 rounded-full font-bold shadow-lg">Run Regional Audit</button></div>
-            ) : (
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
-                    <div className="lg:col-span-4 space-y-6">
-                        <div className="bg-[#002147] text-white p-10 rounded-[40px] shadow-xl relative overflow-hidden font-bold"><Users className="text-[#C5A059] mb-4 opacity-50 absolute -right-4 -top-4" size={120} /><p className="text-[10px] font-black uppercase text-white/50 tracking-widest mb-2 relative z-10">Total Audited Assets</p><p className="text-7xl font-serif font-black relative z-10">{assessments.length}</p></div>
-                    </div>
-                    <div className="lg:col-span-8 bg-white rounded-[40px] shadow-sm border overflow-hidden"><div className="p-8 border-b bg-slate-50 flex justify-between items-center font-bold"><h3 className="text-xs font-black uppercase text-slate-400 tracking-widest">Regional Feed</h3><div className="bg-emerald-50 text-emerald-600 px-4 py-1.5 rounded-full border border-emerald-100 text-[10px] font-black shadow-sm flex items-center gap-2 uppercase tracking-widest"><Activity size={12}/> Global Data Sync: Live</div></div>
-                        <div className="overflow-x-auto"><table className="w-full text-left font-bold"><tbody className="divide-y divide-slate-100">{assessments.map(m => (<tr key={m.id} className="hover:bg-slate-50/50 transition-all group">
-                            <td className="p-6"><div className="flex items-center gap-4"><div className="h-10 w-10 bg-slate-100 rounded-full flex items-center justify-center font-black text-[#002147] group-hover:bg-[#002147] group-hover:text-white transition-all uppercase">{m.userName?.charAt(0)}</div><p className="font-bold text-[#002147]">{m.userName}</p></div></td>
-                            <td className="p-6"><span className="px-3 py-1 rounded text-[10px] font-black uppercase border" style={{color: ARCHETYPES[m.archetype]?.color}}>{m.archetype}</span></td>
-                            <td className="p-6 text-xs text-slate-300 uppercase tracking-widest font-black">{m.timestamp ? new Date(m.timestamp).toLocaleDateString() : 'Pending'}</td>
-                            <td className="p-6"><div className="flex gap-2"><div className="w-8 h-1.5 bg-slate-100 rounded-full overflow-hidden"><div className="h-full bg-[#002147]" style={{width:`${m.scores?.b}%`}}/></div><div className="w-8 h-1.5 bg-slate-100 rounded-full overflow-hidden"><div className="h-full bg-[#C5A059]" style={{width:`${m.scores?.f}%`}}/></div></div></td>
-                        </tr>))}</tbody></table></div>
-                    </div>
-                </div>
-            )}
-        </div>
     </div>
   );
 
