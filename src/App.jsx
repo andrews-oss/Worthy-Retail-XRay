@@ -8,7 +8,7 @@ import {
   ArrowRight, HeartPulse, UserCheck,
   Flame, Microscope, Building2, Store, AlertOctagon,
   FileSearch, ClipboardCheck, Scale, Gavel,
-  Fingerprint, EyeOff, CloudUpload
+  Fingerprint, EyeOff, UploadCloud
 } from 'lucide-react';
 import { initializeApp, getApps } from 'firebase/app';
 import { getAuth, signInAnonymously, onAuthStateChanged } from 'firebase/auth';
@@ -193,45 +193,36 @@ export default function App() {
 
   // --- RECALIBRATED ARCHETYPE ENGINE ---
   const results = useMemo(() => {
-    const answeredKeys = Object.keys(answers);
-    if (answeredKeys.length < QUESTIONS.length) return null;
+    const answeredCount = Object.keys(answers).length;
+    if (answeredCount < QUESTIONS.length) return null;
     
     const s = { B: 0, F: 0, P: 0 };
     QUESTIONS.forEach(q => s[q.pillar] += (answers[q.id] || 0));
     const b = Math.round((s.B/45)*100), f = Math.round((s.F/45)*100), p = Math.round((s.P/45)*100);
     const avg = (b + f + p) / 3;
 
-    // Reliability Check (Anti-Cheat)
+    // Reliability Check
     const fives = Object.values(answers).filter(v => v === 5).length;
     const reliability = fives > 23 ? 45 : 94; 
 
     let arch = ARCHETYPES.ACCIDENTAL;
     
-    // Logic ladder prioritizing relative imbalances
+    // Improved Logic Ladder
     if (avg >= 85) arch = ARCHETYPES.SCALER;
     else if (f >= 75 && (b <= 60 || p <= 60)) {
         if (b < p) arch = ARCHETYPES.MAVERICK;
         else arch = ARCHETYPES.BURNOUT;
     }
-    else if (avg >= 70) arch = ARCHETYPES.SOLID;            
+    else if (avg >= 60) arch = ARCHETYPES.SOLID;            
     else if (b >= 75 && f <= 60) arch = ARCHETYPES.BUREAUCRAT; 
     else if (p >= 75 && f <= 60) arch = ARCHETYPES.VISIONARY;  
     else if (b >= 75 && p <= 65) arch = ARCHETYPES.HUMANIST;   
-    else if (avg >= 55) arch = ARCHETYPES.SOLID; 
     else arch = ARCHETYPES.ACCIDENTAL;
 
     const lowest = [{id: 'B', val: b}, {id: 'F', val: f}, {id: 'P', val: p}].reduce((prev, curr) => (prev.val < curr.val) ? prev : curr);
 
     return { ...arch, scores: { b, f, p }, lowestPillar: lowest.id, reliability };
   }, [answers]);
-
-  // --- TRANSITION GUARD ---
-  useEffect(() => {
-    if (Object.keys(answers).length === QUESTIONS.length && view === 'quiz') {
-      const timer = setTimeout(() => setView('results'), 400);
-      return () => clearTimeout(timer);
-    }
-  }, [answers, view]);
 
   const saveResults = async () => {
     if (!db || !results) {
@@ -315,7 +306,13 @@ export default function App() {
         <div className="grid grid-cols-1 gap-3">
           {[5,4,3,2,1].map(v => (
             <button key={v} onClick={()=>{
-              setAnswers(prev => ({...prev, [QUESTIONS[currentStep].id]:v}));
+              setAnswers(prev => {
+                const updated = {...prev, [QUESTIONS[currentStep].id]:v};
+                if(Object.keys(updated).length === QUESTIONS.length) {
+                    setTimeout(() => setView('results'), 400);
+                }
+                return updated;
+              });
               if(currentStep < QUESTIONS.length-1) setCurrentStep(currentStep+1);
             }} className="w-full text-left p-5 rounded-2xl border-2 border-slate-50 hover:border-[#C5A059] font-bold text-slate-600 active:bg-slate-50 transition-all flex justify-between items-center group">
               <span>{v===5?'Strongly Agree':v===1?'Strongly Disagree':v===4?'Agree':v===2?'Disagree':'Neutral'}</span>
@@ -333,7 +330,7 @@ export default function App() {
             <div className="flex gap-2 w-full md:w-auto">
                 <button onClick={()=>window.print()} className="flex-1 md:flex-none bg-[#002147] text-white px-8 py-4 rounded-full font-black flex items-center justify-center gap-2 shadow-xl hover:scale-105 transition-transform"><Printer size={18}/> Export PDF Report</button>
                 <button onClick={saveResults} disabled={isSaving} className={`flex-1 md:flex-none px-8 py-4 rounded-full font-black shadow-xl flex items-center justify-center gap-2 ${isSaving ? 'bg-slate-400 cursor-not-allowed' : 'bg-[#C5A059] text-white hover:bg-[#b88d40]'}`}>
-                    {isSaving ? <Activity className="animate-spin" size={18}/> : <CloudUpload size={18}/>}
+                    {isSaving ? <Activity className="animate-spin" size={18}/> : <UploadCloud size={18}/>}
                     {isSaving ? 'Syncing...' : 'Submit to Board'}
                 </button>
             </div>
@@ -441,9 +438,7 @@ export default function App() {
                     <div className="mt-4 p-8 bg-slate-900 rounded-[32px] text-white border-2 border-slate-800 shadow-2xl relative overflow-hidden">
                          <div className="absolute top-0 right-0 p-6 opacity-10"><ShieldCheck size={100}/></div>
                          <p className="text-[10px] font-black uppercase text-[#C5A059] tracking-widest mb-2 relative z-10">Integrity Commitment</p>
-                         <button className="w-full bg-[#C5A059] text-white px-10 py-5 rounded-2xl font-black mt-8 shadow-2xl flex items-center justify-center gap-4 active:scale-95 transition-all uppercase tracking-widest text-sm relative z-10 hover:bg-[#b88d40]">
-                            Activate Remediation Path <ArrowRight size={20}/>
-                         </button>
+                         <button className="w-full bg-[#C5A059] text-white px-10 py-5 rounded-2xl font-black mt-8 shadow-2xl flex items-center justify-center gap-4 active:scale-95 transition-all uppercase tracking-widest text-sm relative z-10">Activate Remediation Path <ArrowRight size={20}/></button>
                     </div>
                   </div>
                 </div>
@@ -476,9 +471,9 @@ export default function App() {
                     </div>
                     <div className="lg:col-span-8 bg-white rounded-[40px] shadow-sm border overflow-hidden"><div className="p-8 border-b bg-slate-50 flex justify-between items-center font-bold"><h3 className="text-xs font-black uppercase text-slate-400 tracking-widest">Regional Feed</h3><div className="bg-emerald-50 text-emerald-600 px-4 py-1.5 rounded-full border border-emerald-100 text-[10px] font-black shadow-sm flex items-center gap-2 uppercase tracking-widest"><Activity size={12}/> Global Data Sync: Live</div></div>
                         <div className="overflow-x-auto"><table className="w-full text-left font-bold"><tbody className="divide-y divide-slate-100">{assessments.map(m => (<tr key={m.id} className="hover:bg-slate-50/50 transition-all group">
-                            <td className="p-6"><div className="flex items-center gap-4"><div className="h-10 w-10 bg-slate-100 rounded-full flex items-center justify-center font-black text-[#002147] group-hover:bg-[#002147] group-hover:text-white transition-all uppercase">{m.userName.charAt(0)}</div><p className="font-bold text-[#002147]">{m.userName}</p></div></td>
+                            <td className="p-6"><div className="flex items-center gap-4"><div className="h-10 w-10 bg-slate-100 rounded-full flex items-center justify-center font-black text-[#002147] group-hover:bg-[#002147] group-hover:text-white transition-all uppercase">{m.userName?.charAt(0)}</div><p className="font-bold text-[#002147]">{m.userName}</p></div></td>
                             <td className="p-6"><span className="px-3 py-1 rounded text-[10px] font-black uppercase border" style={{color: ARCHETYPES[m.archetype]?.color}}>{m.archetype}</span></td>
-                            <td className="p-6 text-xs text-slate-300 uppercase tracking-widest font-black">{new Date(m.timestamp).toLocaleDateString()}</td>
+                            <td className="p-6 text-xs text-slate-300 uppercase tracking-widest font-black">{m.timestamp ? new Date(m.timestamp).toLocaleDateString() : 'Pending'}</td>
                             <td className="p-6"><div className="flex gap-2"><div className="w-8 h-1.5 bg-slate-100 rounded-full overflow-hidden"><div className="h-full bg-[#002147]" style={{width:`${m.scores?.b}%`}}/></div><div className="w-8 h-1.5 bg-slate-100 rounded-full overflow-hidden"><div className="h-full bg-[#C5A059]" style={{width:`${m.scores?.f}%`}}/></div></div></td>
                         </tr>))}</tbody></table></div>
                     </div>
@@ -491,7 +486,7 @@ export default function App() {
   return (
     <div className="min-h-screen bg-[#FAF9F6] flex flex-col items-center justify-center p-6 text-[#002147] font-bold">
         <Activity className="animate-spin text-[#C5A059] mb-4" size={48} />
-        <p className="font-serif text-2xl font-bold tracking-tight">Syncing Forensic Integrity Sync...</p>
+        <p className="font-serif text-2xl font-bold tracking-tight">Establishing Forensic Integrity Sync...</p>
     </div>
   );
 }
