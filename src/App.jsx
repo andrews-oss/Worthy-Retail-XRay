@@ -11,10 +11,10 @@ import {
   Fingerprint, EyeOff
 } from 'lucide-react';
 import { initializeApp, getApps } from 'firebase/app';
-import { getAuth, signInAnonymously, onAuthStateChanged } from 'firebase/auth';
+import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from 'firebase/auth';
 import { getFirestore, collection, addDoc, onSnapshot, serverTimestamp } from 'firebase/firestore';
 
-// --- CLOUD INITIALIZATION ---
+// --- CLOUD INITIALIZATION (Board-Ready Reliability) ---
 let db = null;
 let auth = null;
 const appId = typeof __app_id !== 'undefined' ? __app_id : 'worthy-retail-xray';
@@ -23,13 +23,14 @@ const initFirebase = () => {
   try {
     const rawConfig = typeof __firebase_config !== 'undefined' ? __firebase_config : null;
     if (rawConfig) {
-      const config = JSON.parse(rawConfig);
+      const config = typeof rawConfig === 'string' ? JSON.parse(rawConfig) : rawConfig;
       const app = getApps().length === 0 ? initializeApp(config) : getApps()[0];
       auth = getAuth(app);
       db = getFirestore(app);
-      signInAnonymously(auth).catch(e => console.error("Forensic Auth Failure:", e));
     }
-  } catch (e) { console.error("Risk System Connection Offline."); }
+  } catch (e) { 
+    console.error("Cloud Initialization Error:", e);
+  }
 };
 
 initFirebase();
@@ -38,7 +39,7 @@ initFirebase();
 
 const THRIVE_ENGINE = [
   { l: 'T', w: 'Total Agency', d: 'Peak autonomous capacity; delivering world-class output without expensive management overhead.' },
-  { l: 'H', w: 'Health', d: 'Mitigation of "Human Debt" (Burnout) to protect the brands primary asset and reduce liability claims.' },
+  { l: 'H', w: 'Health', d: 'Mitigation of "Human Debt" (Burnout) to protect the brand\'s primary asset and reduce liability claims.' },
   { l: 'R', w: 'Resilience', d: 'System-wide shock absorption; maintaining margin during market or regulatory volatility.' },
   { l: 'I', w: 'Inclusion', d: 'Statutory compliance regarding fairness and neurodiversity; minimizing EEOC exposure.' },
   { l: 'V', w: 'Values', d: 'Behavioral integrity; ensuring floor-level conduct aligns with brand governance standards.' },
@@ -46,73 +47,45 @@ const THRIVE_ENGINE = [
 ];
 
 const ARCHETYPES = {
-  SCALER: { 
-    id: 'SCALER', name: 'The Ecosystem Scaler', color: '#059669', icon: <Trophy className="w-10 h-10"/>, 
-    status: "Enterprise Asset", riskLevel: "NEGLIGIBLE",
-    quote: "Elite alignment of the BFP Backbone and THRIVE behavioral engine.",
-    meaning: "Your BFP Backbone is secure. The THRIVE engine is firing autonomously—specifically excelling in 'Total Agency' and 'Effectiveness.' You reduce the cost-of-leadership for the brand.",
-    riskImplications: "Low material exposure. Succession planning is the primary focus; candidate is ready for multi-unit architecture.",
-    striveFor: "Global Legacy Scaling" 
-  },
-  SOLID: { 
-    id: 'SOLID', name: 'Solid Foundation', color: '#10b981', icon: <UserCheck className="w-10 h-10"/>, 
-    status: "Legacy Ready", riskLevel: "LOW",
-    quote: "Strong structural integrity across all leadership priorities.",
-    meaning: "Consistent professional operator. Bedrock is secure. To reach 'Scaler' status, focus on the 'Total Agency' lever—empowering your team to lead without your tactical intervention.",
-    riskImplications: "Operational plateau. Risk of middle-management friction as ecosystem complexity grows.",
-    striveFor: "Autonomous Leadership" 
-  },
-  MAVERICK: { 
-    id: 'MAVERICK', name: 'High-Performance Maverick', color: '#f59e0b', icon: <Gavel className="w-10 h-10"/>, 
-    status: "High Liability Risk", riskLevel: "CRITICAL",
-    quadrant: "High P&L Contribution / High Behavioral Risk",
-    quote: "Exceptional commercial results achieved through non-compliant shortcut behaviors.",
-    meaning: "Commercial contribution is high, but Bedrock (Compliance) is fractured. In the US market, this is a critical litigation risk (EEOC/OSHA). Your THRIVE engine lacks 'Inclusion' and 'Health.'",
-    riskImplications: "Material litigation, regulatory penalties, and long-term brand erosion. Potential for EEOC class-action intervention.",
-    protocol: "Monitor: Compliance KPIs. Boundary: Non-negotiable HR standards. Remediate: Track 1, Module 1.",
-    striveFor: "Regulated Velocity" 
-  },
-  BUREAUCRAT: { 
-    id: 'BUREAUCRAT', name: 'Compliant Bureaucrat', color: '#2563eb', icon: <ShieldAlert className="w-10 h-10"/>, 
-    status: "Operational Drag", riskLevel: "MEDIUM",
-    quote: "High Bedrock integrity but critically low operational velocity.",
-    meaning: "Bedrock is secure, but Fuel is missing. The unit is bogged down in red tape. Your THRIVE engine lacks 'Effectiveness.' You are safe, but losing market ground.",
-    riskImplications: "Market share loss and uncompetitive labor efficiency. Risk of high-performer attrition due to slow decision cycles.",
-    striveFor: "System Decoupling" 
-  },
-  BURNOUT: { 
-    id: 'BURNOUT', name: 'Burnout Driver', color: '#ef4444', icon: <Flame className="w-10 h-10"/>, 
-    status: "Human Debt High", riskLevel: "HIGH",
-    quote: "KPIs achieved through 'Human Debt' at the expense of health.",
-    meaning: "Velocity achieved through brute force. You are destroying your team's THRIVE 'Health' markers. This path leads to a collapse of Bedrock and massive attrition costs.",
-    riskImplications: "Mass voluntary turnover, high recruitment costs, and workers' comp claims. Temporary performance at permanent brand cost.",
-    striveFor: "Capacity Recovery" 
-  },
-  VISIONARY: { 
-    id: 'VISIONARY', name: 'Performative Visionary', color: '#8b5cf6', icon: <Compass className="w-10 h-10"/>, 
-    status: "Hollow Backbone", riskLevel: "MEDIUM/HIGH",
-    quote: "High purpose alignment but failing in execution and systems.",
-    meaning: "Purpose is high, but Bedrock and Fuel are non-existent. Leadership is charisma-led rather than system-led. The ecosystem is chaotic and demotivating.",
-    riskImplications: "Inventory shrink, operational inconsistency, and loss of regional/Board confidence.",
-    striveFor: "Structural Hardening" 
-  },
-  HUMANIST: { 
-    id: 'HUMANIST', name: 'Cultural Humanist', color: '#ec4899', icon: <HeartPulse className="w-10 h-10"/>, 
-    status: "Low Execution", riskLevel: "MEDIUM",
-    quote: "Strong human connection but missing the operational edge.",
-    meaning: "High trust (Bedrock) but zero accountability (Fuel). You have created a family culture rather than a high-performance retail unit. Margins are leaking.",
-    riskImplications: "Margin erosion, consistent KPI failure, and high cost-of-service compared to sector benchmarks.",
-    striveFor: "Accountable Performance" 
-  },
-  ACCIDENTAL: { 
-    id: 'ACCIDENTAL', name: 'Accidental Leader', color: '#b91c1c', icon: <AlertTriangle className="w-10 h-10"/>, 
-    status: "Critical Risk", riskLevel: "CRITICAL",
-    quote: "Technical expert managing on survival instinct alone.",
-    meaning: "Complete BFP Backbone fracture. No THRIVE engine present. Leading on instinct rather than infrastructure. Total liability for any scalable ecosystem.",
-    riskImplications: "Total unit failure, legal non-compliance, and immediate retention risk for all key assets.",
-    striveFor: "Core BFP Foundations" 
-  }
+  SCALER: { id: 'SCALER', name: 'Ecosystem Scaler', color: '#059669', icon: <Trophy/>, status: "Enterprise Asset", riskLevel: "NEGLIGIBLE", striveFor: "Global Multi-Unit Architecture" },
+  SOLID: { id: 'SOLID', name: 'Solid Foundation', color: '#10b981', icon: <UserCheck/>, status: "Legacy Ready", riskLevel: "LOW", striveFor: "Autonomous Leadership" },
+  MAVERICK: { id: 'MAVERICK', name: 'High-Performance Maverick', color: '#f59e0b', icon: <Gavel/>, status: "High Liability Risk", riskLevel: "CRITICAL", striveFor: "Regulated Velocity" },
+  BUREAUCRAT: { id: 'BUREAUCRAT', name: 'Compliant Bureaucrat', color: '#2563eb', icon: <ShieldAlert/>, status: "Operational Drag", riskLevel: "MEDIUM", striveFor: "System Decoupling" },
+  BURNOUT: { id: 'BURNOUT', name: 'Burnout Driver', color: '#ef4444', icon: <Flame/>, status: "Human Debt High", riskLevel: "HIGH", striveFor: "Capacity Recovery" },
+  VISIONARY: { id: 'VISIONARY', name: 'Performative Visionary', color: '#8b5cf6', icon: <Compass/>, status: "Hollow Backbone", riskLevel: "MEDIUM/HIGH", striveFor: "Structural Hardening" },
+  HUMANIST: { id: 'HUMANIST', name: 'Cultural Humanist', color: '#ec4899', icon: <HeartPulse/>, status: "Low Execution", riskLevel: "MEDIUM", striveFor: "Accountable Performance" },
+  ACCIDENTAL: { id: 'ACCIDENTAL', name: 'Accidental Leader', color: '#b91c1c', icon: <AlertTriangle/>, status: "Total Risk", riskLevel: "CRITICAL", striveFor: "Core Integrity Foundations" }
 };
+
+const QUESTIONS = [
+  { id: 1, pillar: 'B', text: "My team feels safe admitting mistakes to me without fear of retribution." },
+  { id: 2, pillar: 'B', text: "I default to transparency and radical honesty even during peak holiday pressure." },
+  { id: 3, pillar: 'B', text: "Workplace safety and compliance protocols are never bypassed for speed." },
+  { id: 4, pillar: 'B', text: "Conflict within the team is resolved through direct, values-led, respectful dialogue." },
+  { id: 5, pillar: 'B', text: "Diversity of thought and neurodiversity are actively welcomed in our decisions." },
+  { id: 6, pillar: 'B', text: "I have a clear system for auditing 'Psychological Safety' on the retail floor." },
+  { id: 7, pillar: 'B', text: "The team knows I consistently 'have their back' when facing external pressure." },
+  { id: 8, pillar: 'B', text: "We have a 'Truth-Default' culture where bad news travels faster than good news." },
+  { id: 9, pillar: 'B', text: "Mental and physical health are treated as a shared leadership duty, not just policy." },
+  { id: 10, pillar: 'F', text: "We hit KPIs without relying on 'Brute Force' or constant intervention." },
+  { id: 11, pillar: 'F', text: "Our operational systems accelerate speed rather than acting as red tape." },
+  { id: 12, pillar: 'F', text: "I have data-driven systems to measure the team's execution velocity." },
+  { id: 13, pillar: 'F', text: "The team solves 80% of floor-level problems in <60 seconds without me." },
+  { id: 14, pillar: 'F', text: "We use technology and digital tools effectively to automate repetitive tasks." },
+  { id: 15, pillar: 'F', text: "We can pivot floor strategy or layout within 24 hours based on market data." },
+  { id: 16, pillar: 'F', text: "Decision loops are fast, feedback-rich, and clearly understood by the team." },
+  { id: 17, pillar: 'F', text: "I spend less than 20% of my shift 'firefighting' operational glitches." },
+  { id: 18, pillar: 'F', text: "The team shows high resilience and discipline during seasonal peaks." },
+  { id: 19, pillar: 'P', text: "Every team member can articulate our unit's 'Why' beyond sales targets." },
+  { id: 20, pillar: 'P', text: "The team treats this ecosystem as a legacy they are building, not just a paycheck." },
+  { id: 21, pillar: 'P', text: "Personal growth and career legacy are discussed as often as daily targets." },
+  { id: 22, pillar: 'P', text: "The team understands the community and social impact of our brand presence." },
+  { id: 23, pillar: 'P', text: "We share a unified vision of what 'Winning' looks like for the next 12 months." },
+  { id: 24, pillar: 'P', text: "Staff morale remains high and mission-focused even during difficult trading periods." },
+  { id: 25, pillar: 'P', text: "Team members act as 'Owner-Operators,' taking initiative without being asked." },
+  { id: 26, pillar: 'P', text: "Our lived values are evident in every interaction, not just on a poster." },
+  { id: 27, pillar: 'P', text: "Individual 'Agency' is encouraged; staff feel they have a genuine stake in our success." }
+];
 
 const CURRICULUM = {
     B: { title: "Bedrock: Compliance", track1: "Bulletproof Shift", track2: "BFP Operating System" },
@@ -122,49 +95,16 @@ const CURRICULUM = {
 
 const PROGRAMME = {
   frontLine: {
-    B: [{ name: "Remediation Path", title: "Track 1, Module 1: Bulletproof Shift", desc: "Hard-coding compliance, safety (OSHA), and health standards to mitigate risk." }],
-    F: [{ name: "Performance Sprint", title: "Track 1, Module 2: Running the Numbers", desc: "Understanding floor-level P&L: payroll, conversion, and execution velocity." }],
+    B: [{ name: "Mandatory Remediation", title: "Track 1, Module 1: Bulletproof Shift", desc: "Hard-coding compliance, safety (OSHA), and health standards to mitigate material risk." }],
+    F: [{ name: "Performance Sprint", title: "Track 1, Module 2: Running the Numbers", desc: "Hard-wiring floor-level P&L: conversion, labor spend, and execution velocity." }],
     P: [{ name: "Retention Strategy", title: "Track 1, Module 3: Coaching & Agency", desc: "Transforming employee agency to reduce attrition and increase ownership." }]
   },
   multiUnit: {
-    B: [{ name: "Remediation Path", title: "Track 2, Module 1: BFP as an OS", desc: "Installing the strategic framework across regions to stabilize multi-site risk." }],
+    B: [{ name: "Mandatory Remediation", title: "Track 2, Module 1: BFP as an OS", desc: "Installing the strategic framework across regions to stabilize multi-site risk." }],
     F: [{ name: "Performance Sprint", title: "Track 2, Module 2: Leading Through Data", desc: "Multi-site dashboard mastery to identify performance leaks globally." }],
     P: [{ name: "Legacy Strategy", title: "Track 2, Module 4: Multi-Unit Coaching", desc: "Evolving store visits into legacy sessions to hard-code brand consistency." }]
   }
 };
-
-const QUESTIONS = [
-  // BEDROCK
-  { id: 1, pillar: 'B', text: "My team feels safe admitting mistakes to me without fear of retribution." },
-  { id: 2, pillar: 'B', text: "I default to transparency and radical honesty even during high-pressure shifts." },
-  { id: 3, pillar: 'B', text: "Workplace safety and compliance protocols (OSHA/EEOC) are never bypassed for speed." },
-  { id: 4, pillar: 'B', text: "Conflict within the team is resolved through direct, values-led, respectful dialogue." },
-  { id: 5, pillar: 'B', text: "Diversity of thought and neurodiversity are actively welcomed in our decisions." },
-  { id: 6, pillar: 'B', text: "I have a clear system for auditing 'Psychological Safety' on the retail floor." },
-  { id: 7, pillar: 'B', text: "The team knows I consistently 'have their back' when facing external pressure." },
-  { id: 8, pillar: 'B', text: "We have a 'Truth-Default' culture where bad news travels faster than good news." },
-  { id: 9, pillar: 'B', text: "Mental and physical health are treated as a shared leadership duty." },
-  // FUEL
-  { id: 10, pillar: 'F', text: "We hit KPIs without relying on 'Brute Force' or my constant intervention." },
-  { id: 11, pillar: 'F', text: "Our operational systems accelerate speed rather than acting as organizational red tape." },
-  { id: 12, pillar: 'F', text: "I have data-driven systems to measure the team's execution velocity." },
-  { id: 13, pillar: 'F', text: "The team solves 80% of floor-level problems in <60 seconds without me." },
-  { id: 14, pillar: 'F', text: "We use technology and digital tools effectively to automate repetitive tasks." },
-  { id: 15, pillar: 'F', text: "We can pivot floor strategy or layout within 24 hours based on market data." },
-  { id: 16, pillar: 'F', text: "Decision loops are fast, feedback-rich, and clearly understood by the whole team." },
-  { id: 17, pillar: 'F', text: "I spend less than 20% of my shift 'firefighting' operational glitches." },
-  { id: 18, pillar: 'F', text: "The team shows high resilience and discipline during seasonal peak traffic." },
-  // PURPOSE
-  { id: 19, pillar: 'P', text: "Every team member can articulate our unit's 'Why' beyond just sales targets." },
-  { id: 20, pillar: 'P', text: "The team treats this ecosystem as a legacy they are building." },
-  { id: 21, pillar: 'P', text: "Personal growth and career legacy are discussed as often as daily targets." },
-  { id: 22, pillar: 'P', text: "The team understands the community and social impact of our brand presence." },
-  { id: 23, pillar: 'P', text: "We share a unified vision of what 'Winning' looks like for the next 12 months." },
-  { id: 24, pillar: 'P', text: "Staff morale remains high and mission-focused even during difficult trading periods." },
-  { id: 25, pillar: 'P', text: "Team members act as 'Owner-Operators,' taking initiative without being asked." },
-  { id: 26, pillar: 'P', text: "Our lived values are evident in every interaction, not just on a poster." },
-  { id: 27, pillar: 'P', text: "Individual 'Agency' is encouraged; staff feel they have a genuine stake in our success." }
-];
 
 export default function App() {
   const [view, setView] = useState('welcome'); 
@@ -184,36 +124,31 @@ export default function App() {
     }
   }, []);
 
-  // --- CALCULATOR ENGINE (HARDENED) ---
+  // --- RECALIBRATED ARCHETYPE ENGINE ---
   const results = useMemo(() => {
     const answeredKeys = Object.keys(answers);
     if (answeredKeys.length < QUESTIONS.length) return null;
     
     const s = { B: 0, F: 0, P: 0 };
-    QUESTIONS.forEach(q => s[q.pillar] += answers[q.id]);
+    QUESTIONS.forEach(q => s[q.pillar] += (answers[q.id] || 0));
     const b = Math.round((s.B/45)*100), f = Math.round((s.F/45)*100), p = Math.round((s.P/45)*100);
     const avg = (b + f + p) / 3;
 
-    // Reliability Check (Board Logic)
+    // Reliability Check (Anti-Cheat)
     const fives = Object.values(answers).filter(v => v === 5).length;
     const reliability = fives > 24 ? 45 : 94; 
 
-    // RELATIVE VARIANCE LOGIC (Solves Accidental Default)
     let arch = ARCHETYPES.ACCIDENTAL;
     
-    // 1. Elite Scaling
-    if (avg >= 85) arch = ARCHETYPES.SCALER;
-    // 2. High Performance Imbalances
-    else if (f > 80 && b < 60) arch = ARCHETYPES.MAVERICK;
-    else if (f > 80 && p < 65) arch = ARCHETYPES.BURNOUT;
-    // 3. Foundation States
-    else if (avg >= 70) arch = ARCHETYPES.SOLID;
-    // 4. Low Performance Imbalances
-    else if (b > 75 && f < 55) arch = ARCHETYPES.BUREAUCRAT;
-    else if (p > 75 && b < 60) arch = ARCHETYPES.VISIONARY;
-    else if (b > 75 && p < 60) arch = ARCHETYPES.HUMANIST;
-    // 5. Default Fallback
-    else if (avg >= 55) arch = ARCHETYPES.SOLID; // Mid-range general
+    // Logic ladder prioritizing imbalances for robust profiling
+    if (avg >= 83) arch = ARCHETYPES.SCALER;
+    else if (f >= 75 && b <= 58) arch = ARCHETYPES.MAVERICK; // High performance, low compliance
+    else if (f >= 75 && p <= 62) arch = ARCHETYPES.BURNOUT;  // High performance, high burnout
+    else if (avg >= 70) arch = ARCHETYPES.SOLID;            // High consistent performer
+    else if (b >= 75 && f <= 58) arch = ARCHETYPES.BUREAUCRAT; // Safe but slow
+    else if (p >= 75 && f <= 58) arch = ARCHETYPES.VISIONARY;  // Inspired but chaotic
+    else if (b >= 75 && p <= 62) arch = ARCHETYPES.HUMANIST;   // Good culture, low output
+    else if (avg >= 55) arch = ARCHETYPES.SOLID; // Mid-range default to Solid for better morale
     else arch = ARCHETYPES.ACCIDENTAL;
 
     const lowest = [{id: 'B', val: b}, {id: 'F', val: f}, {id: 'P', val: p}].reduce((prev, curr) => (prev.val < curr.val) ? prev : curr);
@@ -230,14 +165,29 @@ export default function App() {
   }, [answers, view]);
 
   const saveResults = async () => {
-    if (!db || !user || !results) return alert("System Link Pending...");
+    if (!db || !results) return;
     setIsSaving(true);
     try {
-      await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'assessments'), {
-        userName, teamCode: teamCode.toUpperCase() || "NONE", scope, archetype: results.id, scores: results.scores, reliability: results.reliability, timestamp: new Date().toISOString()
-      });
-      alert("CONFIRMED: Audit submitted to Enterprise Hub.");
-    } catch (e) { alert("Submission Failed."); }
+      // Ensure authenticated first (Rule 3)
+      let currentUser = auth.currentUser;
+      if (!currentUser) {
+        const cred = await signInAnonymously(auth);
+        currentUser = cred.user;
+      }
+      
+      if (currentUser) {
+        await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'assessments'), {
+          userName, teamCode: teamCode.toUpperCase() || "NONE", scope, 
+          archetype: results.id, scores: results.scores, reliability: results.reliability, 
+          timestamp: new Date().toISOString(), createdAt: serverTimestamp(),
+          userId: currentUser.uid
+        });
+        alert("CONFIRMED: Audit results submitted to Enterprise Hub.");
+      }
+    } catch (e) { 
+      console.error(e);
+      alert("Submission error. Please try again."); 
+    }
     setIsSaving(false);
   };
 
@@ -255,7 +205,7 @@ export default function App() {
   const ReportFooter = ({ page }) => (
     <div className="mt-12 flex justify-between items-center border-t border-slate-100 pt-8 text-[#cbd5e1] font-black text-[10px] uppercase tracking-[0.2em] w-full">
         <span>AUDIT DATE: {new Date().toLocaleDateString()}</span>
-        <span>RETAIL RISK INSTRUMENT | CONFIDENTIAL</span>
+        <span>RETAIL INTEGRITY INSTRUMENT | CONFIDENTIAL</span>
         <span>PAGE {page} OF 3</span>
     </div>
   );
@@ -267,31 +217,26 @@ export default function App() {
       <div className="max-w-xl w-full bg-white p-8 md:p-16 rounded-[40px] shadow-2xl border-t-[12px] border-[#002147] text-center">
         <p className="uppercase tracking-widest text-[#C5A059] font-black text-[10px] mb-4">Worthy Academy Enterprise</p>
         <h1 className="text-4xl md:text-6xl font-serif font-black mb-8 leading-tight">Human Risk Audit</h1>
-        
         <div className="space-y-6 text-left mb-10">
             <div className="bg-slate-900 p-6 rounded-3xl text-white">
-                <p className="text-[10px] font-black uppercase text-[#C5A059] mb-2 flex items-center gap-2"><Fingerprint size={14}/> Forensic Protocol</p>
+                <p className="text-[10px] font-black uppercase text-[#C5A059] mb-2 flex items-center gap-2"><Fingerprint size={14}/> Integrity Protocol</p>
                 <p className="text-xs font-bold leading-relaxed opacity-80 mb-4">Accurate reporting is essential. Statistical checks are active to identify input bias.</p>
                 <label className="flex items-center gap-3 cursor-pointer">
                     <input type="checkbox" checked={integritySigned} onChange={(e)=>setIntegritySigned(e.target.checked)} className="w-5 h-5 accent-[#C5A059]"/>
                     <span className="text-[10px] font-black uppercase">I declare these inputs are factually accurate.</span>
                 </label>
             </div>
-
-            <div><label className="text-[10px] font-black uppercase text-slate-400 ml-2 mb-1 block">Responsibility Scope</label>
+            <div>
+                <label className="text-[10px] font-black uppercase text-slate-400 mb-2 block">Scope</label>
                 <div className="flex gap-2">
-                    <button onClick={()=>setScope('frontLine')} className={`flex-1 p-4 rounded-2xl border-2 font-bold transition-all ${scope==='frontLine'?'border-[#C5A059] text-[#C5A059] bg-[#C5A059]/5 shadow-sm':'border-slate-100 text-slate-300'}`}>Front-Line</button>
-                    <button onClick={()=>setScope('multiUnit')} className={`flex-1 p-4 rounded-2xl border-2 font-bold transition-all ${scope==='multiUnit'?'border-[#C5A059] text-[#C5A059] bg-[#C5A059]/5 shadow-sm':'border-slate-100 text-slate-300'}`}>Multi-Unit</button>
+                    <button onClick={()=>setScope('frontLine')} className={`flex-1 p-4 rounded-2xl border-2 font-bold transition-all ${scope==='frontLine'?'border-[#C5A059] text-[#C5A059] bg-[#C5A059]/5':'border-slate-100 text-slate-300'}`}>Front-Line</button>
+                    <button onClick={()=>setScope('multiUnit')} className={`flex-1 p-4 rounded-2xl border-2 font-bold transition-all ${scope==='multiUnit'?'border-[#C5A059] text-[#C5A059] bg-[#C5A059]/5':'border-slate-100 text-slate-300'}`}>Multi-Unit</button>
                 </div>
             </div>
-
-            <div className="grid grid-cols-1 gap-4">
-                <input type="text" value={userName} onChange={(e)=>setUserName(e.target.value)} placeholder="Full Name..." className="w-full p-5 border-2 rounded-2xl font-bold outline-none focus:border-[#C5A059]" />
-                <input type="text" value={teamCode} onChange={(e)=>setTeamCode(e.target.value)} placeholder="Hub ID (e.g. REGION04)" className="w-full p-5 border-2 rounded-2xl font-bold outline-none focus:border-[#C5A059] uppercase" />
-            </div>
+            <input type="text" value={userName} onChange={(e)=>setUserName(e.target.value)} placeholder="Full Name..." className="w-full p-5 border-2 rounded-2xl font-bold outline-none focus:border-[#C5A059]" />
+            <input type="text" value={teamCode} onChange={(e)=>setTeamCode(e.target.value)} placeholder="Organization Hub ID" className="w-full p-5 border-2 rounded-2xl font-bold outline-none focus:border-[#C5A059] uppercase" />
         </div>
-
-        <button disabled={!userName || !integritySigned} onClick={()=>setView('quiz')} className="w-full bg-[#002147] text-white py-6 rounded-full font-black text-xl active:scale-95 transition-all shadow-xl hover:bg-[#C5A059] disabled:opacity-30">Begin Forensic Audit</button>
+        <button disabled={!userName || !integritySigned} onClick={()=>setView('quiz')} className="w-full bg-[#002147] text-white py-6 rounded-full font-black text-xl active:scale-95 transition-all shadow-xl hover:bg-[#C5A059] disabled:opacity-30">Initialize Audit</button>
       </div>
     </div>
   );
@@ -321,10 +266,10 @@ export default function App() {
     <div className="min-h-screen bg-[#cbd5e1] py-12 px-6">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center mb-10 gap-4 print:hidden">
             <div className="flex gap-2 w-full md:w-auto">
-                <button onClick={()=>window.print()} className="flex-1 md:flex-none bg-[#002147] text-white px-8 py-4 rounded-full font-black flex items-center justify-center gap-2 shadow-xl hover:scale-105 transition-transform"><Printer size={18}/> Forensic Export (PDF)</button>
-                <button onClick={saveResults} className="flex-1 md:flex-none bg-[#C5A059] text-white px-8 py-4 rounded-full font-black shadow-xl">{isSaving?'Syncing...':'Submit to Hub'}</button>
+                <button onClick={()=>window.print()} className="flex-1 md:flex-none bg-[#002147] text-white px-8 py-4 rounded-full font-black flex items-center justify-center gap-2 shadow-xl hover:scale-105 transition-transform"><Printer size={18}/> Export Forensic PDF</button>
+                <button onClick={saveResults} disabled={isSaving} className="flex-1 md:flex-none bg-[#C5A059] text-white px-8 py-4 rounded-full font-black shadow-xl disabled:opacity-50">{isSaving?'Syncing...':'Submit to Hub'}</button>
             </div>
-            <button onClick={()=>window.location.reload()} className="text-[#002147] font-black uppercase text-[10px] tracking-widest hover:underline transition-all"><RefreshCw className="inline mr-2" size={14}/> Restart Audit</button>
+            <button onClick={()=>window.location.reload()} className="text-[#002147] font-black uppercase text-[10px] tracking-widest hover:underline transition-all"><RefreshCw className="inline mr-2" size={14}/> Restart</button>
         </div>
 
         <div className="max-w-[1280px] mx-auto space-y-12">
@@ -363,7 +308,7 @@ export default function App() {
                     <div>
                         <div className="flex items-center gap-6 mb-10">
                             <div className="p-4 bg-white shadow-xl rounded-2xl text-[#002147] border-2 border-slate-100 scale-125 origin-left">
-                                {React.cloneElement(results.icon, {size: 40})}
+                                {React.cloneElement(ARCHETYPES[results.id].icon, {size: 40, className: "w-10 h-10"})}
                             </div>
                             <div>
                                 <p className="text-[10px] font-black uppercase text-[#C5A059] tracking-widest mb-1 font-bold">Operating Archetype</p>
