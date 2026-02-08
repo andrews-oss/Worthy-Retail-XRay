@@ -11,26 +11,39 @@ import {
   Fingerprint, EyeOff, UploadCloud
 } from 'lucide-react';
 import { initializeApp, getApps } from 'firebase/app';
-import { getAuth, signInAnonymously, onAuthStateChanged } from 'firebase/auth';
+import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from 'firebase/auth';
 import { getFirestore, collection, addDoc, onSnapshot, serverTimestamp } from 'firebase/firestore';
 
-// --- CLOUD INITIALIZATION (RULE 1 & 3 COMPLIANT) ---
+// --- CLOUD INITIALIZATION (REPAIRED HANDSHAKE) ---
 let db = null;
 let auth = null;
-const appId = typeof window !== 'undefined' && window.__app_id ? window.__app_id : 'worthy-retail-xray';
+
+// Standard environment variable checks for multi-platform compatibility
+const appId = typeof __app_id !== 'undefined' ? __app_id : 'worthy-retail-xray';
 
 const initFirebase = () => {
   try {
-    const rawConfig = typeof window !== 'undefined' && window.__firebase_config ? window.__firebase_config : null;
+    // Check multiple possible locations for config to ensure Vercel/Canvas sync
+    const rawConfig = typeof __firebase_config !== 'undefined' ? __firebase_config : null;
+    
     if (rawConfig) {
       const config = typeof rawConfig === 'string' ? JSON.parse(rawConfig) : rawConfig;
       const app = getApps().length === 0 ? initializeApp(config) : getApps()[0];
       auth = getAuth(app);
       db = getFirestore(app);
-      signInAnonymously(auth).catch(e => console.error("Firebase Auth Error:", e));
+
+      // Perform Rule 3 compliant authentication
+      const initAuth = async () => {
+        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+          await signInWithCustomToken(auth, __initial_auth_token);
+        } else {
+          await signInAnonymously(auth);
+        }
+      };
+      initAuth();
     }
   } catch (e) { 
-    console.error("Risk System Connection Offline."); 
+    console.error("Risk System Initialization Failure:", e);
   }
 };
 
@@ -53,7 +66,7 @@ const ARCHETYPES = {
     status: "Enterprise Asset", riskLevel: "NEGLIGIBLE",
     quote: "Elite alignment of the BFP Backbone and THRIVE behavioral engine.",
     meaning: "Your BFP Backbone is secure. The THRIVE engine is firing autonomously—specifically excelling in 'Total Agency.' You represent the benchmark for global brand scaling.",
-    riskImplications: "Minimal exposure. Succession planning is the primary focus; ready for multi-unit architecture.",
+    riskImplications: "Minimal material exposure. Succession planning is the primary focus; ready for multi-unit architecture.",
     striveFor: "Global Multi-Unit Architecture" 
   },
   SOLID: { 
@@ -137,7 +150,7 @@ const PROGRAMME = {
 const QUESTIONS = [
   { id: 1, pillar: 'B', text: "My team feels safe admitting mistakes to me without fear of retribution." },
   { id: 2, pillar: 'B', text: "I default to transparency and radical honesty even during peak holiday pressure." },
-  { id: 3, pillar: 'B', text: "Workplace safety and compliance protocols are never bypassed for speed." },
+  { id: 3, pillar: 'B', text: "Workplace safety and compliance protocols (OSHA/EEOC) are never bypassed for speed." },
   { id: 4, pillar: 'B', text: "Conflict within the team is resolved through direct, values-led, respectful dialogue." },
   { id: 5, pillar: 'B', text: "Diversity of thought and neurodiversity are actively welcomed in our decisions." },
   { id: 6, pillar: 'B', text: "I have a clear system for auditing 'Psychological Safety' on the retail floor." },
@@ -193,30 +206,29 @@ export default function App() {
 
   // --- RECALIBRATED ARCHETYPE ENGINE ---
   const results = useMemo(() => {
-    const answeredCount = Object.keys(answers).length;
-    if (answeredCount < QUESTIONS.length) return null;
+    const answeredKeys = Object.keys(answers);
+    if (answeredKeys.length < QUESTIONS.length) return null;
     
     const s = { B: 0, F: 0, P: 0 };
     QUESTIONS.forEach(q => s[q.pillar] += (answers[q.id] || 0));
     const b = Math.round((s.B/45)*100), f = Math.round((s.F/45)*100), p = Math.round((s.P/45)*100);
     const avg = (b + f + p) / 3;
 
-    // Reliability Check
+    // Reliability Check (Anti-Cheat)
     const fives = Object.values(answers).filter(v => v === 5).length;
     const reliability = fives > 23 ? 45 : 94; 
 
     let arch = ARCHETYPES.ACCIDENTAL;
     
-    // Improved Logic Ladder
+    // Logic ladder prioritizing relative imbalances and ranges
     if (avg >= 85) arch = ARCHETYPES.SCALER;
-    else if (f >= 75 && (b <= 60 || p <= 60)) {
-        if (b < p) arch = ARCHETYPES.MAVERICK;
-        else arch = ARCHETYPES.BURNOUT;
-    }
-    else if (avg >= 60) arch = ARCHETYPES.SOLID;            
+    else if (f >= 78 && b <= 62) arch = ARCHETYPES.MAVERICK; 
+    else if (f >= 78 && p <= 62) arch = ARCHETYPES.BURNOUT;  
+    else if (avg >= 72) arch = ARCHETYPES.SOLID;            
     else if (b >= 75 && f <= 60) arch = ARCHETYPES.BUREAUCRAT; 
     else if (p >= 75 && f <= 60) arch = ARCHETYPES.VISIONARY;  
-    else if (b >= 75 && p <= 65) arch = ARCHETYPES.HUMANIST;   
+    else if (b >= 75 && p <= 68) arch = ARCHETYPES.HUMANIST;   
+    else if (avg >= 60) arch = ARCHETYPES.SOLID; // Mid-range baseline
     else arch = ARCHETYPES.ACCIDENTAL;
 
     const lowest = [{id: 'B', val: b}, {id: 'F', val: f}, {id: 'P', val: p}].reduce((prev, curr) => (prev.val < curr.val) ? prev : curr);
@@ -224,11 +236,25 @@ export default function App() {
     return { ...arch, scores: { b, f, p }, lowestPillar: lowest.id, reliability };
   }, [answers]);
 
+  // --- TRANSITION GUARD ---
+  useEffect(() => {
+    if (Object.keys(answers).length === QUESTIONS.length && view === 'quiz') {
+      const timer = setTimeout(() => setView('results'), 400);
+      return () => clearTimeout(timer);
+    }
+  }, [answers, view]);
+
   const saveResults = async () => {
-    if (!db || !results) {
-        alert("Clinical Data Handshake Failed. Contact HQ.");
+    if (!db) {
+        alert("Establishing secure connection to Enterprise Hub... Please try again in 5 seconds.");
+        initFirebase();
         return;
     }
+    if (!results) {
+        alert("Calculated results not found. Audit cycle incomplete.");
+        return;
+    }
+    
     setIsSaving(true);
     try {
       if (!auth.currentUser) await signInAnonymously(auth);
@@ -240,7 +266,8 @@ export default function App() {
       });
       alert("SUCCESS: Diagnostic transmitted to Enterprise Hub.");
     } catch (e) { 
-      alert(`Handshake Failure: ${e.message}`); 
+      console.error(e);
+      alert(`Handshake Failure: ${e.message}. Please check your connection.`); 
     }
     setIsSaving(false);
   };
@@ -269,7 +296,7 @@ export default function App() {
   if (view === 'welcome') return (
     <div className="min-h-screen bg-[#FAF9F6] flex flex-col items-center justify-center p-4 text-[#002147]">
       <div className="max-w-xl w-full bg-white p-8 md:p-16 rounded-[40px] shadow-2xl border-t-[12px] border-[#002147] text-center relative">
-        <div className="absolute top-4 right-8 text-[8px] font-black opacity-20 uppercase tracking-widest">v2.6 Master-Handshake</div>
+        <div className="absolute top-4 right-8 text-[8px] font-black opacity-20 uppercase tracking-widest">v2.7 Master-Handshake</div>
         <p className="uppercase tracking-widest text-[#C5A059] font-black text-[10px] mb-4">Enterprise Human-Risk Management</p>
         <h1 className="text-4xl md:text-6xl font-serif font-black mb-8 leading-tight text-slate-900">Risk X-Ray</h1>
         <div className="space-y-6 text-left mb-10">
@@ -306,13 +333,7 @@ export default function App() {
         <div className="grid grid-cols-1 gap-3">
           {[5,4,3,2,1].map(v => (
             <button key={v} onClick={()=>{
-              setAnswers(prev => {
-                const updated = {...prev, [QUESTIONS[currentStep].id]:v};
-                if(Object.keys(updated).length === QUESTIONS.length) {
-                    setTimeout(() => setView('results'), 400);
-                }
-                return updated;
-              });
+              setAnswers(prev => ({...prev, [QUESTIONS[currentStep].id]:v}));
               if(currentStep < QUESTIONS.length-1) setCurrentStep(currentStep+1);
             }} className="w-full text-left p-5 rounded-2xl border-2 border-slate-50 hover:border-[#C5A059] font-bold text-slate-600 active:bg-slate-50 transition-all flex justify-between items-center group">
               <span>{v===5?'Strongly Agree':v===1?'Strongly Disagree':v===4?'Agree':v===2?'Disagree':'Neutral'}</span>
@@ -373,7 +394,7 @@ export default function App() {
                     <div>
                         <div className="flex items-center gap-6 mb-10">
                             <div className="p-4 bg-white shadow-xl rounded-2xl text-[#002147] border-2 border-slate-100 scale-125 origin-left">
-                                {React.cloneElement(results.icon, {size: 40, className: "w-10 h-10"})}
+                                {React.cloneElement(ARCHETYPES[results.id].icon, {size: 40, className: "w-10 h-10"})}
                             </div>
                             <div>
                                 <p className="text-[10px] font-black uppercase text-[#C5A059] tracking-widest mb-1 font-bold">Operating Archetype</p>
@@ -414,7 +435,7 @@ export default function App() {
             </div>
 
             {/* Page 3: Roadmap */}
-            <div className="report-slide bg-[#FAF9F6] p-8 md:p-24 border-t-[14px] border-[#C5A059] shadow-2xl min-h-[720px] flex flex-col rounded-[40px] print:rounded-none">
+            <div className="report-slide bg-[#FAF9F6] p-8 md:p-24 border-t-[14px] border-[#002147] shadow-2xl min-h-[720px] flex flex-col rounded-[40px] print:rounded-none">
                 <div className="flex items-center gap-4 mb-10 border-b pb-8 font-bold"><div className="bg-[#002147] text-[#C5A059] p-4 rounded-full shadow-lg"><ClipboardCheck size={32} /></div><h2 className="text-2xl md:text-4xl font-serif font-bold text-[#002147]">Leadership Integrity Remediation</h2></div>
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 flex-grow">
                   <div className="lg:col-span-5 bg-white p-8 md:p-12 rounded-[48px] border shadow-xl text-center flex flex-col items-center justify-center">
@@ -460,7 +481,7 @@ export default function App() {
   if (view === 'team_dashboard') return (
     <div className="min-h-screen bg-slate-50 p-4 md:p-10 text-[#002147]">
         <div className="max-w-7xl mx-auto"><div className="flex justify-between items-center mb-10"><div className="flex items-center gap-4"><div className="bg-[#002147] text-[#C5A059] p-3 rounded-2xl shadow-lg font-bold"><Activity size={24} /></div><div><h1 className="text-2xl font-serif font-bold uppercase tracking-tight">Enterprise Integrity Hub: {teamCode}</h1><p className="text-xs text-slate-400 font-bold uppercase tracking-widest">Global Human-Risk Heat Map</p></div></div>
-            <button onClick={()=>setView('welcome')} className="bg-white px-6 py-3 rounded-xl border shadow-sm font-bold flex items-center gap-2 text-[#C5A059] hover:bg-slate-50 transition-all"><ArrowLeft size={18}/> Exit Hub</button>
+            <button onClick={()=>setView('welcome')} className="bg-white px-6 py-3 rounded-xl border shadow-sm font-bold flex items-center gap-2 text-[#C5A059] hover:bg-slate-50 transition-all font-bold"><ArrowLeft size={18}/> Exit Hub</button>
         </div>
             {!assessments.length ? (
                 <div className="bg-white p-20 rounded-[40px] border shadow-sm text-center font-bold"><Users size={48} className="mx-auto mb-6 text-slate-200" /><h2 className="text-2xl font-serif font-bold mb-2 text-[#002147]">No active audit data found</h2><p className="text-slate-400 mb-8 max-w-md mx-auto leading-relaxed uppercase font-bold text-xs tracking-widest">Sync Handshake Required</p><button onClick={()=>setView('welcome')} className="bg-[#002147] text-white px-10 py-4 rounded-full font-bold shadow-lg">Run Regional Audit</button></div>
@@ -486,7 +507,7 @@ export default function App() {
   return (
     <div className="min-h-screen bg-[#FAF9F6] flex flex-col items-center justify-center p-6 text-[#002147] font-bold">
         <Activity className="animate-spin text-[#C5A059] mb-4" size={48} />
-        <p className="font-serif text-2xl font-bold tracking-tight">Establishing Forensic Integrity Sync...</p>
+        <p className="font-serif text-2xl font-bold tracking-tight">Syncing Forensic Integrity Sync...</p>
     </div>
   );
 }
