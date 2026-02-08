@@ -21,7 +21,7 @@ const appId = typeof __app_id !== 'undefined' ? __app_id : 'worthy-retail-xray';
 
 const initFirebase = () => {
   try {
-    const rawConfig = import.meta.env.VITE_FIREBASE_CONFIG || (typeof __firebase_config !== 'undefined' ? __firebase_config : null);
+    const rawConfig = typeof __firebase_config !== 'undefined' ? __firebase_config : null;
     if (rawConfig) {
       let config = rawConfig;
       if (typeof rawConfig === 'string') {
@@ -40,8 +40,8 @@ initFirebase();
 // --- DATA MODEL ---
 
 const THRIVE_ENGINE = [
-  { l: 'T', w: 'Total Agency', d: 'Peak autonomous capacity; delivering world-class output without expensive management oversight.' },
-  { l: 'H', w: 'Health', d: 'Mitigation of "Human Debt" (Burnout) to protect the brands primary asset and reduce liability claims.' },
+  { l: 'T', w: 'Total Agency', d: 'Peak autonomous capacity; delivering world-class output without expensive management overhead.' },
+  { l: 'H', w: 'Health', d: 'Mitigation of "Human Debt" (Burnout) to protect the brand\'s primary asset and reduce liability claims.' },
   { l: 'R', w: 'Resilience', d: 'System-wide shock absorption; maintaining margin during market or regulatory volatility.' },
   { l: 'I', w: 'Inclusion', d: 'Statutory compliance regarding fairness and neurodiversity; minimizing EEOC exposure.' },
   { l: 'V', w: 'Values', d: 'Behavioral integrity; ensuring floor-level conduct aligns with brand governance standards.' },
@@ -49,14 +49,14 @@ const THRIVE_ENGINE = [
 ];
 
 const ARCHETYPES = {
-  SCALER: { id: 'SCALER', name: 'Ecosystem Scaler', color: '#059669', icon: <Trophy/>, status: "Enterprise Asset", riskLevel: "NEGLIGIBLE", striveFor: "Global Multi-Unit Architecture" },
-  SOLID: { id: 'SOLID', name: 'Solid Foundation', color: '#10b981', icon: <UserCheck/>, status: "Legacy Ready", riskLevel: "LOW", striveFor: "Autonomous Leadership" },
-  MAVERICK: { id: 'MAVERICK', name: 'High-Performance Maverick', color: '#f59e0b', icon: <Gavel/>, status: "High Liability Risk", riskLevel: "CRITICAL", striveFor: "Regulated Velocity" },
-  BUREAUCRAT: { id: 'BUREAUCRAT', name: 'Compliant Bureaucrat', color: '#2563eb', icon: <ShieldAlert/>, status: "Operational Drag", riskLevel: "MEDIUM", striveFor: "System Decoupling" },
-  BURNOUT: { id: 'BURNOUT', name: 'Burnout Driver', color: '#ef4444', icon: <Flame/>, status: "Human Debt High", riskLevel: "HIGH", striveFor: "Capacity Recovery" },
-  VISIONARY: { id: 'VISIONARY', name: 'Performative Visionary', color: '#8b5cf6', icon: <Compass/>, status: "Hollow Backbone", riskLevel: "MEDIUM/HIGH", striveFor: "Structural Hardening" },
-  HUMANIST: { id: 'HUMANIST', name: 'Cultural Humanist', color: '#ec4899', icon: <HeartPulse/>, status: "Low Execution", riskLevel: "MEDIUM", striveFor: "Accountable Performance" },
-  ACCIDENTAL: { id: 'ACCIDENTAL', name: 'Accidental Leader', color: '#b91c1c', icon: <AlertTriangle/>, status: "Total Risk", riskLevel: "CRITICAL", striveFor: "Core Integrity Foundations" }
+  SCALER: { id: 'SCALER', name: 'Ecosystem Scaler', color: '#059669', icon: <Trophy className="w-10 h-10"/>, status: "Enterprise Asset", riskLevel: "NEGLIGIBLE", striveFor: "Global Multi-Unit Architecture" },
+  SOLID: { id: 'SOLID', name: 'Solid Foundation', color: '#10b981', icon: <UserCheck className="w-10 h-10"/>, status: "Legacy Ready", riskLevel: "LOW", striveFor: "Autonomous Leadership" },
+  MAVERICK: { id: 'MAVERICK', name: 'High-Performance Maverick', color: '#f59e0b', icon: <Gavel className="w-10 h-10"/>, status: "High Liability Risk", riskLevel: "CRITICAL", striveFor: "Regulated Velocity" },
+  BUREAUCRAT: { id: 'BUREAUCRAT', name: 'Compliant Bureaucrat', color: '#2563eb', icon: <ShieldAlert className="w-10 h-10"/>, status: "Operational Drag", riskLevel: "MEDIUM", striveFor: "System Decoupling" },
+  BURNOUT: { id: 'BURNOUT', name: 'Burnout Driver', color: '#ef4444', icon: <Flame className="w-10 h-10"/>, status: "Human Debt High", riskLevel: "HIGH", striveFor: "Capacity Recovery" },
+  VISIONARY: { id: 'VISIONARY', name: 'Performative Visionary', color: '#8b5cf6', icon: <Compass className="w-10 h-10"/>, status: "Hollow Backbone", riskLevel: "MEDIUM/HIGH", striveFor: "Structural Hardening" },
+  HUMANIST: { id: 'HUMANIST', name: 'Cultural Humanist', color: '#ec4899', icon: <HeartPulse className="w-10 h-10"/>, status: "Low Execution", riskLevel: "MEDIUM", striveFor: "Accountable Performance" },
+  ACCIDENTAL: { id: 'ACCIDENTAL', name: 'Accidental Leader', color: '#b91c1c', icon: <AlertTriangle className="w-10 h-10"/>, status: "Total Risk", riskLevel: "CRITICAL", striveFor: "Core Integrity Foundations" }
 };
 
 const QUESTIONS = [
@@ -118,12 +118,13 @@ export default function App() {
 
   // --- FORENSIC CALCULATOR ---
   const forensicResults = useMemo(() => {
-    if (Object.keys(answers).length < QUESTIONS.length) return null;
+    const answeredCount = Object.keys(answers).length;
+    if (answeredCount < QUESTIONS.length) return null;
     
     // 1. Reliability Check (Straight-lining detection)
     const valArray = Object.values(answers);
     const fives = valArray.filter(v => v === 5).length;
-    const reliability = fives > (QUESTIONS.length * 0.9) ? 45 : 94; // If 90% are perfect, confidence drops
+    const reliability = fives > (QUESTIONS.length * 0.9) ? 45 : 94; 
 
     // 2. Score Calculation
     const s = { B: 0, F: 0, P: 0 };
@@ -147,10 +148,10 @@ export default function App() {
   }, [answers]);
 
   const saveResults = async () => {
-    if (!db || !user) return;
+    if (!db || !user || !forensicResults) return;
     setIsSaving(true);
     await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'assessments'), {
-      userName, teamCode: teamCode.toUpperCase(), scope, archetype: forensicResults.id, scores: forensicResults.scores, reliability: forensicResults.reliability, timestamp: new Date().toISOString()
+      userName, teamCode: teamCode.toUpperCase() || "NONE", scope, archetype: forensicResults.id, scores: forensicResults.scores, reliability: forensicResults.reliability, timestamp: new Date().toISOString()
     });
     alert("Audit Dispatched to Enterprise Hub.");
     setIsSaving(false);
@@ -164,6 +165,14 @@ export default function App() {
       <div className={`${small ? 'h-1.5' : 'h-2 md:h-3'} bg-slate-100 rounded-full overflow-hidden`}>
         <div className="h-full transition-all duration-1000" style={{ width: `${value}%`, backgroundColor: color }} />
       </div>
+    </div>
+  );
+
+  const ReportFooter = ({ page }) => (
+    <div className="mt-12 flex justify-between items-center border-t border-slate-100 pt-8 text-[#cbd5e1] font-black text-[10px] uppercase tracking-[0.2em] w-full">
+        <span>GENERATED: {new Date().toLocaleDateString()}</span>
+        <span>RETAIL RISK AUDIT | CONFIDENTIAL</span>
+        <span>PAGE {page} OF 2</span>
     </div>
   );
 
@@ -201,7 +210,6 @@ export default function App() {
 
         <button disabled={!userName || !integritySigned} onClick={()=>setView('quiz')} className="w-full bg-[#002147] text-white py-6 rounded-full font-black text-xl active:scale-95 transition-all shadow-xl hover:bg-[#C5A059] disabled:opacity-30 disabled:grayscale">Initialize Forensic Audit</button>
       </div>
-      <button onClick={()=>setView('team_dashboard')} className="mt-8 text-slate-300 text-[10px] font-black uppercase tracking-widest hover:text-[#002147] transition-colors">Access Analytics Hub</button>
     </div>
   );
 
@@ -217,8 +225,13 @@ export default function App() {
         <div className="grid grid-cols-1 gap-3">
           {[5,4,3,2,1].map(v => (
             <button key={v} onClick={()=>{
-              setAnswers({...answers, [QUESTIONS[currentStep].id]:v});
-              if(currentStep < QUESTIONS.length-1) { setCurrentStep(currentStep+1); window.scrollTo(0,0); } else setView('results');
+              const newAnswers = {...answers, [QUESTIONS[currentStep].id]:v};
+              setAnswers(newAnswers);
+              if(currentStep < QUESTIONS.length-1) { 
+                setCurrentStep(currentStep+1); 
+              } else {
+                setView('results');
+              }
             }} className="w-full text-left p-5 rounded-2xl border-2 border-slate-50 hover:border-[#C5A059] font-bold text-slate-600 active:bg-slate-50 transition-all flex justify-between items-center">
               <span>{v===5?'Strongly Agree':v===1?'Strongly Disagree':v===4?'Agree':v===2?'Disagree':'Neutral'}</span>
               <ChevronRight size={16} className="text-slate-300"/>
@@ -236,11 +249,10 @@ export default function App() {
                 <button onClick={()=>window.print()} className="flex-1 md:flex-none bg-[#002147] text-white px-8 py-4 rounded-full font-black flex items-center justify-center gap-2 shadow-xl"><Printer size={18}/> Export Clinical Profile</button>
                 <button onClick={saveResults} className="flex-1 md:flex-none bg-[#C5A059] text-white px-8 py-4 rounded-full font-black shadow-xl">{isSaving?'Syncing...':'Submit to Board'}</button>
             </div>
-            <button onClick={()=>window.location.reload()} className="text-[#002147] font-black uppercase text-[10px] tracking-widest"><RefreshCw className="inline mr-2" size={14}/> Restart</button>
+            <button onClick={()=>window.location.reload()} className="text-[#002147] font-black uppercase text-[10px] tracking-widest"><RefreshCw className="inline mr-2" size={14}/> Restart Audit</button>
         </div>
 
         <div className="max-w-[1280px] mx-auto space-y-12">
-            {/* Slide 2: Clinical Summary with Reliability Check */}
             <div className="report-slide bg-[#FAF9F6] p-8 md:p-24 border-t-[14px] border-[#002147] shadow-2xl min-h-[720px] flex flex-col rounded-[40px]">
                 <div className="flex justify-between items-start mb-12 border-b pb-8">
                     <h2 className="text-4xl font-serif font-black text-[#002147]">Clinical Risk Summary</h2>
@@ -249,7 +261,6 @@ export default function App() {
                         <p className={`text-2xl font-black ${forensicResults.reliability < 60 ? 'text-red-600' : 'text-emerald-600'}`}>
                             {forensicResults.reliability}% {forensicResults.reliability < 60 ? <EyeOff className="inline ml-1" size={20}/> : <ShieldCheck className="inline ml-1" size={20}/>}
                         </p>
-                        <p className="text-[8px] font-bold uppercase mt-1">{forensicResults.reliability < 60 ? 'Suspected Input Bias' : 'Audit-Grade Quality'}</p>
                     </div>
                 </div>
 
@@ -277,15 +288,15 @@ export default function App() {
 
                     <div className="flex flex-col justify-between h-full py-4">
                         <div>
-                            <PillarBar label="Bedrock (Statutory Foundations)" value={forensicResults.scores.b} color="#002147" />
-                            <PillarBar label="Fuel (Execution Velocity)" value={forensicResults.scores.f} color="#C5A059" />
-                            <PillarBar label="Purpose (High-Value Retention)" value={forensicResults.scores.p} color="#64748b" />
+                            <PillarBar label="Bedrock (Compliance)" value={forensicResults.scores.b} color="#002147" />
+                            <PillarBar label="Fuel (Velocity)" value={forensicResults.scores.f} color="#C5A059" />
+                            <PillarBar label="Purpose (Retention)" value={forensicResults.scores.p} color="#64748b" />
                         </div>
                         <div className="mt-12 grid grid-cols-2 gap-4">
                              {forensicResults.id === 'MAVERICK' && (
                                 <div className="col-span-2 p-6 bg-red-900 text-white rounded-3xl border-4 border-red-500/20">
-                                    <p className="text-[10px] font-black uppercase text-red-400 mb-2">Maverick Remediation Protocol</p>
-                                    <p className="text-xs font-bold leading-relaxed">Immediate freeze on commercial shortcuts. Mandatory HR Standards audit within 14 days. Failure to align creates critical brand liability.</p>
+                                    <p className="text-[10px] font-black uppercase text-red-400 mb-2">Remediation Protocol</p>
+                                    <p className="text-xs font-bold leading-relaxed">Mandatory Standards audit within 14 days. Failure to align creates brand liability.</p>
                                 </div>
                              )}
                              <div className="p-6 bg-slate-100 rounded-3xl text-center">
@@ -294,7 +305,7 @@ export default function App() {
                              </div>
                              <div className="p-6 bg-slate-100 rounded-3xl text-center">
                                  <p className="text-[10px] font-black uppercase text-slate-400 mb-1">Next Review</p>
-                                 <p className="text-sm font-black text-[#002147]">90-DAY RE-AUDIT</p>
+                                 <p className="text-sm font-black text-[#002147]">90-DAY AUDIT</p>
                              </div>
                         </div>
                     </div>
@@ -303,11 +314,10 @@ export default function App() {
             </div>
         </div>
         <style>{`
-          .report-slide { page-break-after: always; }
           @media print { 
             body { background: white !important; padding: 0 !important; } 
             .print\\:hidden { display: none !important; } 
-            .report-slide { width: 1280px !important; height: 720px !important; border-radius: 0 !important; padding: 60px 80px !important; margin: 0 !important; border-top: 14px solid #002147 !important; } 
+            .report-slide { width: 1280px !important; height: 720px !important; border-radius: 0 !important; padding: 60px 80px !important; margin: 0 !important; border-top: 14px solid #002147 !important; break-after: always; } 
             @page { size: 1280px 720px; margin: 0; } 
           }
         `}</style>
