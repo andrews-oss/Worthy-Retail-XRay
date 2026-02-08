@@ -27,6 +27,8 @@ const initFirebase = () => {
       const app = getApps().length === 0 ? initializeApp(config) : getApps()[0];
       auth = getAuth(app);
       db = getFirestore(app);
+      // Initiate anonymous sign-in immediately (Rule 3)
+      signInAnonymously(auth).catch(e => console.error("Firebase Auth Error:", e));
     }
   } catch (e) { console.error("Risk System Connection Offline."); }
 };
@@ -38,7 +40,7 @@ initFirebase();
 const THRIVE_ENGINE = [
   { l: 'T', w: 'Total Agency', d: 'Peak autonomous capacity; the ability for a unit to deliver world-class output without expensive management overhead.' },
   { l: 'H', w: 'Health', d: 'Physical, mental, and financial wellbeing as a shared leadership duty to mitigate "Human Debt" and liability claims.' },
-  { l: 'R', w: 'Resilience', d: 'System-wide absorption of shocks; maintaining margin during market or regulatory volatility.' },
+  { l: 'R', w: 'Resilience', d: 'System-wide absorption of shocks; maintaining operational margin during market or regulatory volatility.' },
   { l: 'I', w: 'Inclusion', d: 'Statutory compliance regarding fairness and neurodiversity; minimizing EEOC exposure.' },
   { l: 'V', w: 'Values', d: 'Behavioral integrity; ensuring floor behavior aligns with brand governance standards.' },
   { l: 'E', w: 'Effectiveness', d: 'Data-driven execution discipline; removing operational friction to maximize velocity and margin.' }
@@ -51,7 +53,7 @@ const ARCHETYPES = {
     quote: "Elite alignment of the BFP Backbone and THRIVE behavioral engine.",
     meaning: "Your BFP Backbone is secure. The THRIVE engine is firing autonomously—specifically excelling in 'Total Agency.' You reduce the cost-of-leadership for the brand.",
     riskImplications: "Low material exposure. Succession planning is the primary focus; candidate is ready for multi-unit architecture.",
-    striveFor: "Global Legacy Scaling" 
+    striveFor: "Global Multi-Unit Architecture" 
   },
   SOLID: { 
     id: 'SOLID', name: 'Solid Foundation', color: '#10b981', icon: <UserCheck className="w-10 h-10"/>, 
@@ -144,7 +146,7 @@ const QUESTIONS = [
   { id: 8, pillar: 'B', text: "We have a 'Truth-Default' culture where bad news travels faster than good news." },
   { id: 9, pillar: 'B', text: "Mental and physical health are treated as a shared leadership duty, not just policy." },
   // FUEL
-  { id: 10, pillar: 'F', text: "We hit KPIs without relying on 'Brute Force' or constant intervention." },
+  { id: 10, pillar: 'F', text: "We hit KPIs without relying on 'Brute Force' or my constant intervention." },
   { id: 11, pillar: 'F', text: "Our operational systems accelerate speed rather than acting as red tape." },
   { id: 12, pillar: 'F', text: "I have data-driven systems to measure the team's execution velocity." },
   { id: 13, pillar: 'F', text: "The team solves 80% of floor-level problems in <60 seconds without me." },
@@ -215,20 +217,40 @@ export default function App() {
     return { ...arch, scores: { b, f, p }, lowestPillar: lowest.id, reliability };
   }, [answers]);
 
+  // --- TRANSITION GUARD ---
+  useEffect(() => {
+    if (Object.keys(answers).length === QUESTIONS.length && view === 'quiz') {
+      const timer = setTimeout(() => setView('results'), 500);
+      return () => clearTimeout(timer);
+    }
+  }, [answers, view]);
+
   const saveResults = async () => {
-    if (!db || !results) return alert("System Link Pending. Check Connection.");
+    if (!db || !results) {
+        alert("Clinical Data Not Ready for Submission.");
+        return;
+    }
     setIsSaving(true);
     try {
-      if (!auth.currentUser) await signInAnonymously(auth);
+      // Ensure authenticated (Rule 3)
+      if (!auth.currentUser) {
+          await signInAnonymously(auth);
+      }
       
       await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'assessments'), {
-        userName, teamCode: teamCode.toUpperCase() || "NONE", scope, 
-        archetype: results.id, scores: results.scores, reliability: results.reliability, 
-        timestamp: new Date().toISOString(), createdAt: serverTimestamp()
+        userName, 
+        teamCode: teamCode.toUpperCase() || "NONE", 
+        scope, 
+        archetype: results.id, 
+        scores: results.scores, 
+        reliability: results.reliability, 
+        timestamp: new Date().toISOString(), 
+        createdAt: serverTimestamp()
       });
-      alert("CONFIRMED: Audit results submitted to Enterprise Hub.");
+      alert("SUCCESS: Audit results transmitted to Enterprise Hub.");
     } catch (e) { 
-      alert("Submission error. Ensure Database Config is correctly set in Vercel."); 
+      console.error(e);
+      alert(`Submission Error: ${e.message}`); 
     }
     setIsSaving(false);
   };
@@ -256,16 +278,17 @@ export default function App() {
 
   if (view === 'welcome') return (
     <div className="min-h-screen bg-[#FAF9F6] flex flex-col items-center justify-center p-4 text-[#002147]">
-      <div className="max-w-xl w-full bg-white p-8 md:p-16 rounded-[40px] shadow-2xl border-t-[12px] border-[#002147] text-center">
-        <p className="uppercase tracking-widest text-[#C5A059] font-black text-[10px] mb-4">Worthy Academy Enterprise</p>
+      <div className="max-w-xl w-full bg-white p-8 md:p-16 rounded-[40px] shadow-2xl border-t-[12px] border-[#002147] text-center relative">
+        <div className="absolute top-4 right-8 text-[8px] font-black opacity-20 uppercase tracking-widest">v2.6 Board-Master</div>
+        <p className="uppercase tracking-widest text-[#C5A059] font-black text-[10px] mb-4">Enterprise Human-Risk Management</p>
         <h1 className="text-4xl md:text-6xl font-serif font-black mb-8 leading-tight">Human Risk Audit</h1>
         <div className="space-y-6 text-left mb-10">
             <div className="bg-slate-900 p-6 rounded-3xl text-white">
-                <p className="text-[10px] font-black uppercase text-[#C5A059] mb-2 flex items-center gap-2"><Fingerprint size={14}/> Forensic Integrity Protocol</p>
+                <p className="text-[10px] font-black uppercase text-[#C5A059] mb-2 flex items-center gap-2"><Fingerprint size={14}/> Integrity Protocol</p>
                 <p className="text-xs font-bold leading-relaxed opacity-80 mb-4">Accurate reporting is essential. Statistical checks are active to identify input bias.</p>
-                <label className="flex items-center gap-3 cursor-pointer">
+                <label className="flex items-center gap-3 cursor-pointer group">
                     <input type="checkbox" checked={integritySigned} onChange={(e)=>setIntegritySigned(e.target.checked)} className="w-5 h-5 accent-[#C5A059]"/>
-                    <span className="text-[10px] font-black uppercase">I declare these inputs are factually accurate.</span>
+                    <span className="text-[10px] font-black uppercase group-hover:text-[#C5A059] transition-colors">I declare these inputs are factually accurate.</span>
                 </label>
             </div>
             <div>
@@ -294,15 +317,12 @@ export default function App() {
             <button key={v} onClick={()=>{
               setAnswers(prev => {
                 const updated = {...prev, [QUESTIONS[currentStep].id]:v};
-                if(Object.keys(updated).length === QUESTIONS.length) {
-                    setTimeout(() => setView('results'), 300);
-                }
                 return updated;
               });
               if(currentStep < QUESTIONS.length-1) setCurrentStep(currentStep+1);
-            }} className="w-full text-left p-5 rounded-2xl border-2 border-slate-50 hover:border-[#C5A059] font-bold text-slate-600 active:bg-slate-50 transition-all flex justify-between items-center">
+            }} className="w-full text-left p-5 rounded-2xl border-2 border-slate-50 hover:border-[#C5A059] font-bold text-slate-600 active:bg-slate-50 transition-all flex justify-between items-center group">
               <span>{v===5?'Strongly Agree':v===1?'Strongly Disagree':v===4?'Agree':v===2?'Disagree':'Neutral'}</span>
-              <ChevronRight size={16} className="text-slate-300"/>
+              <ChevronRight size={16} className="text-slate-300 group-hover:text-[#C5A059] transition-colors"/>
             </button>
           ))}
         </div>
@@ -315,9 +335,9 @@ export default function App() {
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center mb-10 gap-4 print:hidden">
             <div className="flex gap-2 w-full md:w-auto">
                 <button onClick={()=>window.print()} className="flex-1 md:flex-none bg-[#002147] text-white px-8 py-4 rounded-full font-black flex items-center justify-center gap-2 shadow-xl hover:scale-105 transition-transform"><Printer size={18}/> Export Forensic PDF</button>
-                <button onClick={saveResults} disabled={isSaving} className={`flex-1 md:flex-none px-8 py-4 rounded-full font-black shadow-xl flex items-center justify-center gap-2 ${isSaving ? 'bg-slate-400' : 'bg-[#C5A059] text-white'}`}>
+                <button onClick={saveResults} disabled={isSaving} className={`flex-1 md:flex-none px-8 py-4 rounded-full font-black shadow-xl flex items-center justify-center gap-2 ${isSaving ? 'bg-slate-400 cursor-not-allowed' : 'bg-[#C5A059] text-white hover:bg-[#b88d40]'}`}>
                     {isSaving ? <Activity className="animate-spin" size={18}/> : <CloudUpload size={18}/>}
-                    {isSaving ? 'Syncing...' : 'Submit to Board'}
+                    {isSaving ? 'Syncing...' : 'Submit to Hub'}
                 </button>
             </div>
             <button onClick={()=>window.location.reload()} className="text-[#002147] font-black uppercase text-[10px] tracking-widest hover:underline transition-all font-bold"><RefreshCw className="inline mr-2" size={14}/> Restart</button>
@@ -359,7 +379,7 @@ export default function App() {
                     <div>
                         <div className="flex items-center gap-6 mb-10">
                             <div className="p-4 bg-white shadow-xl rounded-2xl text-[#002147] border-2 border-slate-100 scale-125 origin-left">
-                                {React.cloneElement(results.icon, {size: 40, className: "w-10 h-10"})}
+                                {React.cloneElement(ARCHETYPES[results.id].icon, {size: 40, className: "w-10 h-10"})}
                             </div>
                             <div>
                                 <p className="text-[10px] font-black uppercase text-[#C5A059] tracking-widest mb-1 font-bold">Operating Archetype</p>
@@ -405,7 +425,7 @@ export default function App() {
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 flex-grow">
                   <div className="lg:col-span-5 bg-white p-8 md:p-12 rounded-[48px] border shadow-xl text-center flex flex-col items-center justify-center">
                     <GraduationCap size={64} className="text-[#002147] mb-6" />
-                    <p className="text-[10px] font-black uppercase text-slate-400 mb-3 tracking-widest font-bold">Mandatory Mitigation</p>
+                    <p className="text-[10px] font-black uppercase text-slate-400 mb-3 tracking-widest font-bold">Recommended Mitigation</p>
                     <h3 className="text-2xl md:text-4xl font-serif font-bold text-[#002147] mb-4 font-bold">Repair Tier: {CURRICULUM[results.lowestPillar].title.split(':')[0]}</h3>
                     <p className="text-slate-500 text-sm md:text-base leading-relaxed font-medium">To mitigate identified exposures, the following modules must be completed within 90 days as standard corporate due diligence.</p>
                   </div>
@@ -446,7 +466,7 @@ export default function App() {
   return (
     <div className="min-h-screen bg-[#FAF9F6] flex flex-col items-center justify-center p-6 text-[#002147] font-bold">
         <Activity className="animate-spin text-[#C5A059] mb-4" size={48} />
-        <p className="font-serif text-2xl font-bold tracking-tight">Syncing Forensic Integrity Sync...</p>
+        <p className="font-serif text-2xl font-bold tracking-tight">Establishing Forensic Integrity Sync...</p>
     </div>
   );
 }
